@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore-emergency'
 import { Car, Save, ArrowLeft } from 'lucide-react'
+import { carMakes, carModels, carYears } from '../../data/carData'
 import toast from 'react-hot-toast'
 
 function AddVehicle() {
@@ -17,10 +18,11 @@ function AddVehicle() {
     model: '',
     color: '',
     license_plate: '',
-    vin: '',
     vehicle_size: '',
     notes: '',
   })
+
+  const [selectedMake, setSelectedMake] = useState('')
 
   useEffect(() => {
     if (user) {
@@ -45,6 +47,12 @@ function AddVehicle() {
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+    
+    // If make is changed, update selectedMake and clear model
+    if (name === 'make') {
+      setSelectedMake(value)
+      setFormData(prev => ({ ...prev, model: '' }))
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -66,7 +74,6 @@ function AddVehicle() {
           model: formData.model,
           color: formData.color,
           license_plate: formData.license_plate,
-          vin: formData.vin,
           vehicle_size: formData.vehicle_size,
           notes: formData.notes,
         })
@@ -106,47 +113,55 @@ function AddVehicle() {
                 <label className="block text-metallic-silver mb-2 font-semibold">
                   Year <span className="text-bright-cyan">*</span>
                 </label>
-                <input
-                  type="number"
+                <select
                   name="year"
                   value={formData.year}
                   onChange={handleChange}
                   required
-                  min="1900"
-                  max={new Date().getFullYear() + 1}
-                  placeholder="2020"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
-                />
+                >
+                  <option value="">Select Year</option>
+                  {carYears.map(year => (
+                    <option key={year} value={year}>{year}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block text-metallic-silver mb-2 font-semibold">
                   Make <span className="text-bright-cyan">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   name="make"
                   value={formData.make}
                   onChange={handleChange}
                   required
-                  placeholder="Toyota"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
-                />
+                >
+                  <option value="">Select Make</option>
+                  {carMakes.map(make => (
+                    <option key={make} value={make}>{make}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block text-metallic-silver mb-2 font-semibold">
                   Model <span className="text-bright-cyan">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   name="model"
                   value={formData.model}
                   onChange={handleChange}
                   required
-                  placeholder="Camry"
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
-                />
+                  disabled={!selectedMake}
+                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all disabled:opacity-50"
+                >
+                  <option value="">Select Model</option>
+                  {selectedMake && carModels[selectedMake]?.map(model => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -184,32 +199,17 @@ function AddVehicle() {
 
               <div>
                 <label className="block text-metallic-silver mb-2 font-semibold">
-                  License Plate
+                  License Plate <span className="text-bright-cyan">*</span>
                 </label>
                 <input
                   type="text"
                   name="license_plate"
                   value={formData.license_plate}
                   onChange={handleChange}
+                  required
                   placeholder="ABC-1234"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
                 />
-              </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-metallic-silver mb-2 font-semibold">
-                  VIN (Vehicle Identification Number)
-                </label>
-                <input
-                  type="text"
-                  name="vin"
-                  value={formData.vin}
-                  onChange={handleChange}
-                  placeholder="1HGCM82633A123456"
-                  maxLength="17"
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
-                />
-                <p className="text-xs text-light-gray mt-1">Optional: 17-character VIN number</p>
               </div>
 
               <div className="md:col-span-2">
