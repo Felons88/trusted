@@ -38,7 +38,9 @@ function Login() {
       // Get the updated profile from the store after signIn
       setTimeout(() => {
         const updatedProfile = useAuthStore.getState().profile
+        const currentUser = useAuthStore.getState().user
         console.log('Login: Updated profile from store:', updatedProfile)
+        console.log('Login: Current user:', currentUser)
         
         // Redirect immediately based on the profile that was just set
         if (updatedProfile?.role === 'admin') {
@@ -48,9 +50,8 @@ function Login() {
           console.log('Login: Redirecting to client portal')
           navigate('/client-portal')
         } else {
-          // Fallback: check the user email directly
-          const currentUser = useAuthStore.getState().user
-          console.log('Login: Fallback - checking user email:', currentUser?.email)
+          // Fallback: check the user email directly and create profile if needed
+          console.log('Login: Profile not found, checking user email:', currentUser?.email)
           
           if (currentUser?.email === 'jameshewitt312@gmail.com') {
             console.log('Login: Fallback redirecting admin by email')
@@ -58,8 +59,22 @@ function Login() {
           } else if (currentUser?.email === 'IsaiahDellwo01@gmail.com') {
             console.log('Login: Fallback redirecting client by email')
             navigate('/client-portal')
+          } else if (currentUser?.email) {
+            console.log('Login: Creating default client profile for user:', currentUser.email)
+            // Create a default client profile for any other user
+            const defaultProfile = {
+              id: currentUser.id,
+              email: currentUser.email,
+              full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || 'User',
+              role: 'client'
+            }
+            
+            // Set the profile in the store
+            useAuthStore.getState().set({ user: currentUser, profile: defaultProfile })
+            console.log('Login: Created default client profile, redirecting to client portal')
+            navigate('/client-portal')
           } else {
-            console.log('Login: No profile role found, staying on login page')
+            console.log('Login: No user or profile found, staying on login page')
             setError('Profile not loaded properly. Please try again.')
           }
         }

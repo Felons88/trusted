@@ -243,6 +243,65 @@ export const useAuthStore = create((set, get) => ({
     })
     
     if (error) throw error
+    
+    // EMERGENCY: Create profile immediately after successful sign up
+    if (data.user) {
+      console.log('EMERGENCY: Sign up successful, creating profile for:', data.user.email)
+      
+      // EMERGENCY: Hardcode admin profile for jameshewitt312@gmail.com
+      if (data.user.email === 'jameshewitt312@gmail.com') {
+        const adminProfile = {
+          id: data.user.id,
+          email: 'jameshewitt312@gmail.com',
+          full_name: 'Admin User',
+          role: 'admin'
+        }
+        console.log('EMERGENCY: Setting admin profile after sign up:', adminProfile)
+        set({ user: data.user, profile: adminProfile })
+        return data
+      }
+      
+      // EMERGENCY: Hardcode client profile for IsaiahDellwo01@gmail.com
+      if (data.user.email === 'IsaiahDellwo01@gmail.com') {
+        const clientProfile = {
+          id: data.user.id,
+          email: 'IsaiahDellwo01@gmail.com',
+          full_name: 'Isaiah Dellwo',
+          role: 'client'
+        }
+        console.log('EMERGENCY: Setting client profile for Isaiah after sign up:', clientProfile)
+        set({ user: data.user, profile: clientProfile })
+        return data
+      }
+      
+      // For other users, create a default client profile
+      const defaultProfile = {
+        id: data.user.id,
+        email: data.user.email,
+        full_name: userData?.full_name || data.user.email?.split('@')[0] || 'User',
+        role: 'client'
+      }
+      
+      console.log('EMERGENCY: Creating default client profile after sign up:', defaultProfile)
+      
+      // Try to create profile in database
+      try {
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert([defaultProfile])
+        
+        if (insertError) {
+          console.log('EMERGENCY: Failed to create profile in DB during sign up, using local profile:', insertError)
+        } else {
+          console.log('EMERGENCY: Created new profile in DB during sign up for user:', data.user.email)
+        }
+      } catch (insertErr) {
+        console.log('EMERGENCY: Exception creating profile during sign up, using local profile:', insertErr)
+      }
+      
+      set({ user: data.user, profile: defaultProfile })
+    }
+    
     return data
   },
 
