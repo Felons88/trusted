@@ -1,0 +1,20 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://trustedmobiledetailing.com/sitemap.xml
+
+# Block admin areas from indexing
+User-agent: *
+Disallow: /admin
+Disallow: /api/
+
+# Allow specific bots for SEO analysis
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Crawl delay (optional, adjust as needed)
+Crawl-delay: 1

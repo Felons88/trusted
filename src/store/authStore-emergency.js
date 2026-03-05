@@ -27,6 +27,19 @@ export const useAuthStore = create((set, get) => ({
           return
         }
         
+        // EMERGENCY: Hardcode client profile for IsaiahDellwo01@gmail.com
+        if (session.user.email === 'IsaiahDellwo01@gmail.com') {
+          const clientProfile = {
+            id: session.user.id,
+            email: 'IsaiahDellwo01@gmail.com',
+            full_name: 'Isaiah Dellwo',
+            role: 'client'
+          }
+          console.log('EMERGENCY: Using hardcoded client profile for Isaiah:', clientProfile)
+          set({ user: session.user, profile: clientProfile, loading: false })
+          return
+        }
+        
         // For other users, try normal profile loading
         try {
           const { data: profile } = await supabase
@@ -77,7 +90,49 @@ export const useAuthStore = create((set, get) => ({
             return
           }
           
-          set({ user: session.user, profile: null })
+          // EMERGENCY: Hardcode client profile for IsaiahDellwo01@gmail.com
+          if (session.user.email === 'IsaiahDellwo01@gmail.com') {
+            const clientProfile = {
+              id: session.user.id,
+              email: 'IsaiahDellwo01@gmail.com',
+              full_name: 'Isaiah Dellwo',
+              role: 'client'
+            }
+            console.log('EMERGENCY: Using hardcoded client profile for Isaiah on auth change:', clientProfile)
+            set({ user: session.user, profile: clientProfile })
+            return
+          }
+          
+          // For other users, load their profile
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
+            
+            if (profile) {
+              set({ user: session.user, profile })
+            } else {
+              // Create default profile if none exists
+              const defaultProfile = {
+                id: session.user.id,
+                email: session.user.email,
+                full_name: 'User',
+                role: 'client'
+              }
+              set({ user: session.user, profile: defaultProfile })
+            }
+          } catch (profileError) {
+            console.log('EMERGENCY: Profile loading failed on auth change, using default client profile')
+            const clientProfile = {
+              id: session.user.id,
+              email: session.user.email,
+              full_name: 'Client User',
+              role: 'client'
+            }
+            set({ user: session.user, profile: clientProfile })
+          }
         } else {
           set({ user: null, profile: null })
         }

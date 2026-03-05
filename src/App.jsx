@@ -6,6 +6,8 @@ import Navigation from './components/Navigation'
 import FloatingCallButton from './components/FloatingCallButton'
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'
 import { SettingsProvider } from './contexts/SettingsContext'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 
 import Home from './pages/Home'
 import ExteriorDetailing from './pages/ExteriorDetailing'
@@ -163,6 +165,8 @@ function App() {
         </Routes>
         </div>
       </Router>
+      <Analytics />
+      <SpeedInsights />
     </SettingsProvider>
   )
 }

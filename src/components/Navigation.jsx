@@ -15,9 +15,17 @@ function Navigation() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  const handleServicesClick = (e) => {
+    e.preventDefault()
+    const servicesSection = document.getElementById('services')
+    if (servicesSection) {
+      servicesSection.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   const navLinks = [
     { to: '/', label: 'Home' },
-    { to: '/#services', label: 'Services' },
+    { to: '/#services', label: 'Services', onClick: handleServicesClick },
     { to: '/gallery', label: 'Gallery' },
     { to: '/reviews', label: 'Reviews' },
     { to: '/contact', label: 'Contact' },
@@ -42,6 +50,7 @@ function Navigation() {
               <Link
                 key={link.to}
                 to={link.to}
+                onClick={link.onClick}
                 className={`text-sm font-medium transition-all duration-300 hover:text-bright-cyan ${
                   location.pathname === link.to ? 'text-electric-blue' : 'text-light-gray'
                 }`}
@@ -68,10 +77,15 @@ function Navigation() {
               <Link
                 key={link.to}
                 to={link.to}
+                onClick={(e) => {
+                  if (link.onClick) {
+                    link.onClick(e)
+                  }
+                  setIsMobileMenuOpen(false)
+                }}
                 className={`block py-3 text-sm font-medium transition-colors ${
                   location.pathname === link.to ? 'text-electric-blue' : 'text-light-gray'
                 } hover:text-bright-cyan`}
-                onClick={() => setIsMobileMenuOpen(false)}
               >
                 {link.label}
               </Link>
