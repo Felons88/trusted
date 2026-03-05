@@ -23,8 +23,8 @@ export function ProtectedRoute({ children, requireAdmin = false }) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // Check admin requirement - simplified
-  if (requireAdmin && user?.email !== 'jameshewitt312@gmail.com') {
+  // Check admin requirement - use profile role from database
+  if (requireAdmin && profile?.role !== 'admin') {
     return <Navigate to="/client-portal" replace />
   }
 
