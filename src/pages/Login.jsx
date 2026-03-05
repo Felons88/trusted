@@ -35,27 +35,27 @@ function Login() {
       console.log('Login: Sign in successful', result)
       toast.success('Welcome back! Nice to see you again!')
       
-      // Wait a moment for profile to be set
+      // Get the updated profile from the store after signIn
       setTimeout(() => {
-        console.log('Login: Checking profile for redirect', { 
-          email: profile?.email, 
-          role: profile?.role,
-          profile: profile 
-        })
+        const updatedProfile = useAuthStore.getState().profile
+        console.log('Login: Updated profile from store:', updatedProfile)
         
-        if (profile?.role === 'admin') {
+        // Redirect immediately based on the profile that was just set
+        if (updatedProfile?.role === 'admin') {
           console.log('Login: Redirecting to admin panel')
           navigate('/admin')
-        } else if (profile?.role === 'client') {
+        } else if (updatedProfile?.role === 'client') {
           console.log('Login: Redirecting to client portal')
           navigate('/client-portal')
         } else {
-          console.log('Login: No profile role found, checking user email')
-          // Fallback: check user email directly
-          if (user?.email === 'jameshewitt312@gmail.com') {
+          // Fallback: check the user email directly
+          const currentUser = useAuthStore.getState().user
+          console.log('Login: Fallback - checking user email:', currentUser?.email)
+          
+          if (currentUser?.email === 'jameshewitt312@gmail.com') {
             console.log('Login: Fallback redirecting admin by email')
             navigate('/admin')
-          } else if (user?.email === 'IsaiahDellwo01@gmail.com') {
+          } else if (currentUser?.email === 'IsaiahDellwo01@gmail.com') {
             console.log('Login: Fallback redirecting client by email')
             navigate('/client-portal')
           } else {
@@ -63,7 +63,7 @@ function Login() {
             setError('Profile not loaded properly. Please try again.')
           }
         }
-      }, 200) // Reduced timeout
+      }, 100) // Small delay to ensure state update
     } catch (err) {
       console.error('Login: Sign in failed', err)
       setError(err.message || 'The Email or Password that you entered is incorrect check your credentials.')
