@@ -5,9 +5,10 @@ import { useAuthStore } from '../../store/authStore-emergency'
 import { 
   Calendar, Clock, DollarSign, Car, ArrowLeft, 
   MapPin, Phone, Mail, CheckCircle, AlertCircle,
-  User, FileText, Download, MessageSquare
+  User, FileText, Download, MessageSquare 
 } from 'lucide-react'
 import { format } from 'date-fns'
+import ClientNavigation from '../../components/ClientNavigation'
 import toast from 'react-hot-toast'
 
 function ClientBookingDetail() {
@@ -152,8 +153,10 @@ function ClientBookingDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-navy-gradient pt-24 pb-20 px-4">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="min-h-screen bg-navy-gradient">
+      <ClientNavigation />
+      <div className="pt-16 pb-20 px-4">
+        <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex justify-between items-start">
           <div>
@@ -375,6 +378,7 @@ function ClientBookingDetail() {
               </div>
             </Link>
           </div>
+        </div>
         </div>
       </div>
     </div>

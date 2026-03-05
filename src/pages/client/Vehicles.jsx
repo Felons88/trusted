@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore-emergency'
 import { Car, Plus, Edit, Trash2, Eye } from 'lucide-react'
+import ClientNavigation from '../../components/ClientNavigation'
 import toast from 'react-hot-toast'
 
 function Vehicles() {
@@ -74,9 +75,11 @@ function Vehicles() {
   }
 
   return (
-    <div className="min-h-screen bg-navy-gradient pt-24 pb-20 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+    <div className="min-h-screen bg-navy-gradient">
+      <ClientNavigation />
+      <div className="pt-16 pb-20 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-4xl font-bold metallic-heading mb-2">My Vehicles</h1>
             <p className="text-light-gray">Manage your vehicle information</p>
@@ -170,6 +173,7 @@ function Vehicles() {
             ))}
           </div>
         )}
+        </div>
       </div>
     </div>
   )

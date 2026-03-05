@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore-emergency'
 import { Car, Save, ArrowLeft } from 'lucide-react'
 import { carMakes, carModels, carYears } from '../../data/carData'
+import ClientNavigation from '../../components/ClientNavigation'
 import toast from 'react-hot-toast'
 
 function AddVehicle() {
@@ -92,8 +93,10 @@ function AddVehicle() {
 
   
   return (
-    <div className="min-h-screen bg-navy-gradient pt-24 pb-20 px-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-navy-gradient">
+      <ClientNavigation />
+      <div className="pt-16 pb-20 px-4">
+        <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <Link
             to="/client-portal/vehicles"
@@ -244,6 +247,7 @@ function AddVehicle() {
               </Link>
             </div>
           </form>
+        </div>
         </div>
       </div>
     </div>

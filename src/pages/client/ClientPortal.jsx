@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore-emergency'
 import { Calendar, Car, DollarSign, Clock, Plus, Eye, RefreshCw, Settings, User } from 'lucide-react'
 import { format } from 'date-fns'
+import ClientNavigation from '../../components/ClientNavigation'
 import toast from 'react-hot-toast'
 
 function ClientPortal() {
@@ -160,8 +161,10 @@ function ClientPortal() {
   }
 
   return (
-    <div className="min-h-screen bg-navy-gradient pt-24 pb-20 px-4">
-      <div className="max-w-7xl mx-auto space-y-8">
+    <div className="min-h-screen bg-navy-gradient">
+      <ClientNavigation />
+      <div className="pt-16 pb-20 px-4">
+        <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-4xl font-bold metallic-heading mb-2">
@@ -372,6 +375,7 @@ function ClientPortal() {
               <p className="text-sm text-light-gray">Manage your profile and payment methods</p>
             </Link>
           </div>
+        </div>
         </div>
       </div>
     </div>
