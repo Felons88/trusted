@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { useAuthStore } from '../../store/authStore'
-import { Calendar, Car, DollarSign, Clock, Plus, Eye } from 'lucide-react'
+import { useAuthStore } from '../../store/authStore-emergency'
+import { Calendar, Car, DollarSign, Clock, Plus, Eye, RefreshCw, Settings, User } from 'lucide-react'
 import { format } from 'date-fns'
 import toast from 'react-hot-toast'
 
@@ -12,6 +12,7 @@ function ClientPortal() {
   const [bookings, setBookings] = useState([])
   const [vehicles, setVehicles] = useState([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -19,17 +20,32 @@ function ClientPortal() {
     }
   }, [user])
 
-  const loadClientData = async () => {
+  const loadClientData = async (isRefresh = false) => {
     try {
-      const { data: clientData } = await supabase
+      if (isRefresh) {
+        setRefreshing(true)
+      } else {
+        setLoading(true)
+      }
+      
+      console.log('Loading client data for user:', user?.email)
+      
+      // First try to find existing client record
+      const { data: clientData, error: clientError } = await supabase
         .from('clients')
         .select('*')
         .eq('user_id', user.id)
         .single()
 
+      if (clientError && clientError.code !== 'PGRST116') {
+        console.error('Client query error:', clientError)
+      }
+
       if (clientData) {
+        console.log('Found existing client:', clientData)
         setClient(clientData)
 
+        // Load bookings for existing client
         const { data: bookingsData } = await supabase
           .from('bookings')
           .select('*')
@@ -37,6 +53,7 @@ function ClientPortal() {
           .order('created_at', { ascending: false })
           .limit(5)
 
+        // Load vehicles for existing client
         const { data: vehiclesData } = await supabase
           .from('vehicles')
           .select('*')
@@ -45,14 +62,73 @@ function ClientPortal() {
 
         setBookings(bookingsData || [])
         setVehicles(vehiclesData || [])
+      } else {
+        // Create a client record for this user
+        console.log('No client record found, creating one...')
+        const newClient = {
+          user_id: user.id,
+          full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Client',
+          email: user.email,
+          phone: user.user_metadata?.phone || '',
+          address: '',
+          city: '',
+          state: '',
+          zip_code: '',
+          total_spent: 0,
+          total_bookings: 0
+        }
+
+        const { data: createdClient, error: createError } = await supabase
+          .from('clients')
+          .insert([newClient])
+          .select()
+          .single()
+
+        if (createError) {
+          console.error('Error creating client:', createError)
+          // Use fallback client data
+          setClient(newClient)
+        } else {
+          console.log('Created new client:', createdClient)
+          setClient(createdClient)
+        }
+
+        // Initialize empty arrays for new clients
+        setBookings([])
+        setVehicles([])
       }
 
-      setLoading(false)
+      if (isRefresh) {
+        setRefreshing(false)
+        toast.success('Data refreshed successfully!')
+      } else {
+        setLoading(false)
+      }
     } catch (error) {
       console.error('Error loading client data:', error)
       toast.error('Failed to load data')
-      setLoading(false)
+      
+      // Set fallback data
+      setClient({
+        user_id: user.id,
+        full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'Client',
+        email: user.email,
+        total_spent: 0,
+        total_bookings: 0
+      })
+      setBookings([])
+      setVehicles([])
+      
+      if (isRefresh) {
+        setRefreshing(false)
+      } else {
+        setLoading(false)
+      }
     }
+  }
+
+  const handleRefresh = () => {
+    loadClientData(true)
   }
 
   const stats = {
@@ -86,51 +162,82 @@ function ClientPortal() {
   return (
     <div className="min-h-screen bg-navy-gradient pt-24 pb-20 px-4">
       <div className="max-w-7xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-4xl font-bold metallic-heading mb-2">
-            Welcome back, {client?.full_name?.split(' ')[0]}!
-          </h1>
-          <p className="text-light-gray">Manage your vehicles and appointments</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-4xl font-bold metallic-heading mb-2">
+              Welcome back, {client?.full_name?.split(' ')[0] || 'Client'}!
+            </h1>
+            <p className="text-light-gray">Manage your vehicles and appointments</p>
+            <p className="text-sm text-light-gray/60 mt-1">{user?.email}</p>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="btn-secondary flex items-center gap-2 disabled:opacity-50"
+            >
+              <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+            <Link to="/client-portal/settings" className="btn-secondary flex items-center gap-2">
+              <Settings size={16} />
+              Settings
+            </Link>
+          </div>
         </div>
 
-        <div className="grid md:grid-cols-4 gap-6">
-          <div className="glass-card">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Link
+            to="/client-portal/bookings"
+            className="glass-card hover:scale-105 transition-transform duration-300"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-light-gray text-sm mb-1">Total Bookings</p>
-                <p className="text-3xl font-bold text-electric-blue">{stats.totalBookings}</p>
+                <p className="text-3xl font-bold metallic-heading">{stats.totalBookings}</p>
               </div>
-              <Calendar className="text-electric-blue" size={32} />
+              <div className="bg-electric-blue/20 p-4 rounded-full">
+                <Calendar className="text-electric-blue" size={32} />
+              </div>
             </div>
-          </div>
+          </Link>
 
           <div className="glass-card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-light-gray text-sm mb-1">Total Spent</p>
-                <p className="text-3xl font-bold text-bright-cyan">${stats.totalSpent}</p>
+                <p className="text-3xl font-bold metallic-heading">${stats.totalSpent}</p>
               </div>
-              <DollarSign className="text-bright-cyan" size={32} />
+              <div className="bg-bright-cyan/20 p-4 rounded-full">
+                <DollarSign className="text-bright-cyan" size={32} />
+              </div>
             </div>
           </div>
 
-          <div className="glass-card">
+          <Link
+            to="/client-portal/vehicles"
+            className="glass-card hover:scale-105 transition-transform duration-300"
+          >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-light-gray text-sm mb-1">My Vehicles</p>
-                <p className="text-3xl font-bold text-electric-blue">{stats.activeVehicles}</p>
+                <p className="text-3xl font-bold metallic-heading">{stats.activeVehicles}</p>
               </div>
-              <Car className="text-electric-blue" size={32} />
+              <div className="bg-electric-blue/20 p-4 rounded-full">
+                <Car className="text-electric-blue" size={32} />
+              </div>
             </div>
-          </div>
+          </Link>
 
           <div className="glass-card">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-light-gray text-sm mb-1">Upcoming</p>
-                <p className="text-3xl font-bold text-bright-cyan">{stats.upcomingBookings}</p>
+                <p className="text-3xl font-bold metallic-heading">{stats.upcomingBookings}</p>
               </div>
-              <Clock className="text-bright-cyan" size={32} />
+              <div className="bg-bright-cyan/20 p-4 rounded-full">
+                <Clock className="text-bright-cyan" size={32} />
+              </div>
             </div>
           </div>
         </div>
@@ -240,7 +347,7 @@ function ClientPortal() {
           <div className="grid md:grid-cols-3 gap-4">
             <Link
               to="/book-now"
-              className="bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-6 hover:bg-electric-blue/30 transition-all text-center"
+              className="block bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-6 hover:bg-electric-blue/30 transition-all text-center"
             >
               <Calendar className="text-electric-blue mx-auto mb-3" size={32} />
               <h3 className="font-bold text-metallic-silver mb-2">Book Service</h3>
@@ -249,7 +356,7 @@ function ClientPortal() {
 
             <Link
               to="/client-portal/vehicles"
-              className="bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-6 hover:bg-electric-blue/30 transition-all text-center"
+              className="block bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-6 hover:bg-electric-blue/30 transition-all text-center"
             >
               <Car className="text-electric-blue mx-auto mb-3" size={32} />
               <h3 className="font-bold text-metallic-silver mb-2">Manage Vehicles</h3>
@@ -258,11 +365,11 @@ function ClientPortal() {
 
             <Link
               to="/client-portal/settings"
-              className="bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-6 hover:bg-electric-blue/30 transition-all text-center"
+              className="block bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-6 hover:bg-electric-blue/30 transition-all text-center"
             >
-              <DollarSign className="text-electric-blue mx-auto mb-3" size={32} />
-              <h3 className="font-bold text-metallic-silver mb-2">Payment Methods</h3>
-              <p className="text-sm text-light-gray">Manage saved payment methods</p>
+              <Settings className="text-electric-blue mx-auto mb-3" size={32} />
+              <h3 className="font-bold text-metallic-silver mb-2">Settings</h3>
+              <p className="text-sm text-light-gray">Manage your profile and payment methods</p>
             </Link>
           </div>
         </div>

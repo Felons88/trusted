@@ -51,6 +51,9 @@ import ClientPortal from './pages/client/ClientPortal'
 import ClientVehicles from './pages/client/Vehicles'
 import AddVehicle from './pages/client/AddVehicle'
 import VehicleDetail from './pages/client/VehicleDetail'
+import ClientSettings from './pages/client/ClientSettings'
+import ClientBookingDetail from './pages/client/ClientBookingDetail'
+import ClientVehicleEdit from './pages/client/ClientVehicleEdit'
 
 function App() {
   const { initialize } = useAuthStore()
@@ -142,6 +145,21 @@ function App() {
           <Route path="/client-portal/vehicles/:id" element={
             <ProtectedRoute>
               <VehicleDetail />
+            </ProtectedRoute>
+          } />
+          <Route path="/client-portal/vehicles/:id/edit" element={
+            <ProtectedRoute>
+              <ClientVehicleEdit />
+            </ProtectedRoute>
+          } />
+          <Route path="/client-portal/settings" element={
+            <ProtectedRoute>
+              <ClientSettings />
+            </ProtectedRoute>
+          } />
+          <Route path="/client-portal/bookings/:id" element={
+            <ProtectedRoute>
+              <ClientBookingDetail />
             </ProtectedRoute>
           } />
 

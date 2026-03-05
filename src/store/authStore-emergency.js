@@ -150,6 +150,86 @@ export const useAuthStore = create((set, get) => ({
     })
     
     if (error) throw error
+    
+    // EMERGENCY: Immediately create/set profile after successful sign in
+    if (data.user) {
+      console.log('EMERGENCY: Sign in successful, setting profile for:', data.user.email)
+      
+      // EMERGENCY: Hardcode admin profile for jameshewitt312@gmail.com
+      if (data.user.email === 'jameshewitt312@gmail.com') {
+        const adminProfile = {
+          id: data.user.id,
+          email: 'jameshewitt312@gmail.com',
+          full_name: 'Admin User',
+          role: 'admin'
+        }
+        console.log('EMERGENCY: Setting admin profile after sign in:', adminProfile)
+        set({ user: data.user, profile: adminProfile })
+        return data
+      }
+      
+      // EMERGENCY: Hardcode client profile for IsaiahDellwo01@gmail.com
+      if (data.user.email === 'IsaiahDellwo01@gmail.com') {
+        const clientProfile = {
+          id: data.user.id,
+          email: 'IsaiahDellwo01@gmail.com',
+          full_name: 'Isaiah Dellwo',
+          role: 'client'
+        }
+        console.log('EMERGENCY: Setting client profile for Isaiah after sign in:', clientProfile)
+        set({ user: data.user, profile: clientProfile })
+        return data
+      }
+      
+      // For other users, try to load or create profile
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single()
+        
+        if (profileError || !profile) {
+          console.log('EMERGENCY: No profile found, creating default profile after sign in')
+          const defaultProfile = {
+            id: data.user.id,
+            email: data.user.email,
+            full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+            role: 'client'
+          }
+          
+          // Try to create profile in database
+          try {
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert([defaultProfile])
+            
+            if (insertError) {
+              console.log('EMERGENCY: Failed to create profile in DB, using local profile:', insertError)
+            } else {
+              console.log('EMERGENCY: Created new profile in DB for user:', data.user.email)
+            }
+          } catch (insertErr) {
+            console.log('EMERGENCY: Exception creating profile, using local profile:', insertErr)
+          }
+          
+          set({ user: data.user, profile: defaultProfile })
+        } else {
+          console.log('EMERGENCY: Found existing profile after sign in:', profile)
+          set({ user: data.user, profile })
+        }
+      } catch (profileErr) {
+        console.log('EMERGENCY: Profile loading failed after sign in, using default client profile')
+        const fallbackProfile = {
+          id: data.user.id,
+          email: data.user.email,
+          full_name: 'Client User',
+          role: 'client'
+        }
+        set({ user: data.user, profile: fallbackProfile })
+      }
+    }
+    
     return data
   },
 

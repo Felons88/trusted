@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { useAuthStore } from '../../store/authStore'
+import { useAuthStore } from '../../store/authStore-emergency'
 import { Car, Edit, ArrowLeft, Calendar, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
 

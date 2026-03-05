@@ -35,7 +35,7 @@ function Login() {
       console.log('Login: Sign in successful', result)
       toast.success('Welcome back! Nice to see you again!')
       
-      // Wait a bit for profile to load
+      // Wait a moment for profile to be set
       setTimeout(() => {
         console.log('Login: Checking profile for redirect', { 
           email: profile?.email, 
@@ -50,10 +50,20 @@ function Login() {
           console.log('Login: Redirecting to client portal')
           navigate('/client-portal')
         } else {
-          console.log('Login: No profile role found, staying on login page')
-          setError('Profile not loaded properly. Please try again.')
+          console.log('Login: No profile role found, checking user email')
+          // Fallback: check user email directly
+          if (user?.email === 'jameshewitt312@gmail.com') {
+            console.log('Login: Fallback redirecting admin by email')
+            navigate('/admin')
+          } else if (user?.email === 'IsaiahDellwo01@gmail.com') {
+            console.log('Login: Fallback redirecting client by email')
+            navigate('/client-portal')
+          } else {
+            console.log('Login: No profile role found, staying on login page')
+            setError('Profile not loaded properly. Please try again.')
+          }
         }
-      }, 500) // Increased timeout
+      }, 200) // Reduced timeout
     } catch (err) {
       console.error('Login: Sign in failed', err)
       setError(err.message || 'The Email or Password that you entered is incorrect check your credentials.')
@@ -141,19 +151,6 @@ function Login() {
           </div>
 
           
-          {/* Emergency Admin Access - Remove after fixing login flow */}
-          {profile?.email === 'jameshewitt312@gmail.com' && (
-            <div className="mt-6 p-4 bg-electric-blue/20 border border-electric-blue/50 rounded-lg">
-              <p className="text-electric-blue text-sm mb-2">Emergency Admin Access:</p>
-              <button
-                onClick={() => navigate('/admin')}
-                className="btn-primary text-sm w-full"
-              >
-                Go to Admin Panel
-              </button>
-            </div>
-          )}
-
           <div className="mt-4 text-center">
             <Link to="/" className="text-light-gray text-sm hover:text-electric-blue transition-colors">
               ← Back to Home

@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore-emergency'
-import { Car, Save, ArrowLeft } from 'lucide-react'
+import { Car, Save, ArrowLeft, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-function AddVehicle() {
+function ClientVehicleEdit() {
   const { user } = useAuthStore()
+  const { id } = useParams()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [fetchLoading, setFetchLoading] = useState(true)
   const [clientData, setClientData] = useState(null)
+  const [vehicle, setVehicle] = useState(null)
 
   const [formData, setFormData] = useState({
     year: '',
@@ -23,22 +26,61 @@ function AddVehicle() {
   })
 
   useEffect(() => {
-    if (user) {
-      loadClientData()
+    if (user && id) {
+      loadVehicleData()
     }
-  }, [user])
+  }, [user, id])
 
-  const loadClientData = async () => {
+  const loadVehicleData = async () => {
     try {
+      setFetchLoading(true)
+
+      // Get client data
       const { data: client } = await supabase
         .from('clients')
         .select('*')
         .eq('user_id', user.id)
         .single()
 
+      if (!client) {
+        toast.error('Client data not found')
+        navigate('/client-portal/vehicles')
+        return
+      }
+
       setClientData(client)
+
+      // Get vehicle data
+      const { data: vehicleData } = await supabase
+        .from('vehicles')
+        .select('*')
+        .eq('id', id)
+        .eq('client_id', client.id)
+        .single()
+
+      if (!vehicleData) {
+        toast.error('Vehicle not found')
+        navigate('/client-portal/vehicles')
+        return
+      }
+
+      setVehicle(vehicleData)
+      setFormData({
+        year: vehicleData.year?.toString() || '',
+        make: vehicleData.make || '',
+        model: vehicleData.model || '',
+        color: vehicleData.color || '',
+        license_plate: vehicleData.license_plate || '',
+        vin: vehicleData.vin || '',
+        vehicle_size: vehicleData.size || vehicleData.vehicle_size || '',
+        notes: vehicleData.notes || '',
+      })
+
+      setFetchLoading(false)
     } catch (error) {
-      console.error('Error loading client data:', error)
+      console.error('Error loading vehicle data:', error)
+      toast.error('Failed to load vehicle data')
+      setFetchLoading(false)
     }
   }
 
@@ -52,51 +94,93 @@ function AddVehicle() {
     setLoading(true)
 
     try {
-      if (!clientData) {
-        toast.error('Client data not found')
-        return
-      }
-
       const { error } = await supabase
         .from('vehicles')
-        .insert({
-          client_id: clientData.id,
+        .update({
           year: formData.year ? parseInt(formData.year) : null,
           make: formData.make,
           model: formData.model,
           color: formData.color,
           license_plate: formData.license_plate,
           vin: formData.vin,
+          size: formData.vehicle_size,
           vehicle_size: formData.vehicle_size,
           notes: formData.notes,
+          updated_at: new Date().toISOString()
         })
+        .eq('id', id)
 
       if (error) throw error
 
-      toast.success('Vehicle added successfully!')
-      navigate('/client-portal/vehicles')
+      toast.success('Vehicle updated successfully!')
+      navigate(`/client-portal/vehicles/${id}`)
     } catch (error) {
-      console.error('Error adding vehicle:', error)
-      toast.error('Failed to add vehicle')
+      console.error('Error updating vehicle:', error)
+      toast.error('Failed to update vehicle')
     } finally {
       setLoading(false)
     }
   }
 
-  
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to remove this vehicle? This action cannot be undone.')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('vehicles')
+        .update({ 
+          is_active: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+
+      if (error) throw error
+
+      toast.success('Vehicle removed successfully!')
+      navigate('/client-portal/vehicles')
+    } catch (error) {
+      console.error('Error removing vehicle:', error)
+      toast.error('Failed to remove vehicle')
+    }
+  }
+
+  if (fetchLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-electric-blue"></div>
+      </div>
+    )
+  }
+
+  if (!vehicle || !clientData) {
+    return (
+      <div className="min-h-screen bg-navy-gradient pt-24 pb-20 px-4">
+        <div className="max-w-2xl mx-auto text-center">
+          <h1 className="text-4xl font-bold metallic-heading mb-4">Vehicle Not Found</h1>
+          <p className="text-light-gray mb-6">The vehicle you're trying to edit doesn't exist or you don't have access to it.</p>
+          <Link to="/client-portal/vehicles" className="btn-primary">
+            Back to Vehicles
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-navy-gradient pt-24 pb-20 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <Link
-            to="/client-portal/vehicles"
+            to={`/client-portal/vehicles/${id}`}
             className="text-light-gray hover:text-electric-blue transition-colors flex items-center mb-4"
           >
             <ArrowLeft size={20} className="mr-2" />
-            Back to Vehicles
+            Back to Vehicle Details
           </Link>
-          <h1 className="text-4xl font-bold metallic-heading mb-2">Add Vehicle</h1>
-          <p className="text-light-gray">Add a new vehicle to your profile</p>
+          <h1 className="text-4xl font-bold metallic-heading mb-2">Edit Vehicle</h1>
+          <p className="text-light-gray">Update your vehicle information</p>
         </div>
 
         <div className="glass-card">
@@ -234,20 +318,35 @@ function AddVehicle() {
                 className="btn-primary shine-effect flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save size={20} className="inline mr-2" />
-                {loading ? 'Adding Vehicle...' : 'Add Vehicle'}
+                {loading ? 'Updating Vehicle...' : 'Update Vehicle'}
               </button>
               <Link
-                to="/client-portal/vehicles"
+                to={`/client-portal/vehicles/${id}`}
                 className="btn-secondary flex-1 text-center"
               >
                 Cancel
               </Link>
             </div>
           </form>
+
+          <div className="mt-6 pt-6 border-t border-electric-blue/20">
+            <button
+              onClick={handleDelete}
+              className="w-full bg-red-500/20 border border-red-500/30 rounded-lg p-4 hover:bg-red-500/30 transition-colors text-left"
+            >
+              <div className="flex items-center">
+                <Trash2 className="text-red-400 mr-3" size={20} />
+                <div>
+                  <p className="font-bold text-red-400 mb-1">Remove Vehicle</p>
+                  <p className="text-sm text-light-gray">Delete this vehicle from your profile</p>
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-export default AddVehicle
+export default ClientVehicleEdit
