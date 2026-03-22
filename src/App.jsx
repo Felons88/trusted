@@ -32,9 +32,12 @@ import NewBooking from './pages/admin/NewBooking'
 import NewClient from './pages/admin/NewClient'
 import Vehicles from './pages/admin/Vehicles'
 import NewVehicle from './pages/admin/NewVehicle'
+import VehicleEdit from './pages/admin/VehicleEdit'
 import AdminVehicleDetail from './pages/admin/VehicleDetail'
 import Services from './pages/admin/Services'
 import ServiceEdit from './pages/admin/ServiceEdit'
+import NewService from './pages/admin/NewService'
+import NewAddOn from './pages/admin/NewAddOn'
 import AddOnEdit from './pages/admin/AddOnEdit'
 import QuoteRequests from './pages/admin/QuoteRequests'
 import QuoteRequest from './pages/admin/QuoteRequest'
@@ -112,8 +115,11 @@ function App() {
             <Route path="vehicles" element={<Vehicles />} />
             <Route path="vehicles/new" element={<NewVehicle />} />
             <Route path="vehicles/:id" element={<AdminVehicleDetail />} />
+            <Route path="vehicles/:id/edit" element={<VehicleEdit />} />
             <Route path="services" element={<Services />} />
+            <Route path="services/new" element={<NewService />} />
             <Route path="services/:id/edit" element={<ServiceEdit />} />
+            <Route path="addons/new" element={<NewAddOn />} />
             <Route path="addons/:id/edit" element={<AddOnEdit />} />
             <Route path="quote-requests" element={<QuoteRequests />} />
             <Route path="quote-request/new" element={<QuoteRequest />} />

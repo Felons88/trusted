@@ -163,128 +163,130 @@ function ClientPortal() {
   return (
     <div className="min-h-screen bg-navy-gradient">
       <ClientNavigation />
-      <div className="pt-16 pb-20 px-4">
-        <div className="max-w-7xl mx-auto space-y-8">
-        <div className="flex justify-between items-start">
+      <div className="pt-14 sm:pt-16 pb-20 px-3 sm:px-4">
+        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
-            <h1 className="text-4xl font-bold metallic-heading mb-2">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold metallic-heading mb-2">
               Welcome back, {client?.full_name?.split(' ')[0] || 'Client'}!
             </h1>
-            <p className="text-light-gray">Manage your vehicles and appointments</p>
-            <p className="text-sm text-light-gray/60 mt-1">{user?.email}</p>
+            <p className="text-light-gray text-sm sm:text-base">Manage your vehicles and appointments</p>
+            <p className="text-xs sm:text-sm text-light-gray/60 mt-1">{user?.email}</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="btn-secondary flex items-center gap-2 disabled:opacity-50"
+              className="btn-secondary flex items-center gap-2 disabled:opacity-50 text-xs sm:text-sm px-3 py-2"
             >
-              <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
-              {refreshing ? 'Refreshing...' : 'Refresh'}
+              <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+              <span className="hidden xs:inline">{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+              <span className="xs:hidden">{refreshing ? '...' : '↻'}</span>
             </button>
-            <Link to="/client-portal/settings" className="btn-secondary flex items-center gap-2">
-              <Settings size={16} />
-              Settings
+            <Link to="/client-portal/settings" className="btn-secondary flex items-center gap-2 text-xs sm:text-sm px-3 py-2">
+              <Settings size={14} />
+              <span className="hidden xs:inline">Settings</span>
+              <span className="xs:hidden">⚙</span>
             </Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           <Link
             to="/client-portal/bookings"
-            className="glass-card hover:scale-105 transition-transform duration-300"
+            className="glass-card hover:scale-105 transition-transform duration-300 p-4 sm:p-6"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-light-gray text-sm mb-1">Total Bookings</p>
-                <p className="text-3xl font-bold metallic-heading">{stats.totalBookings}</p>
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="bg-electric-blue/20 p-3 sm:p-4 rounded-full">
+                <Calendar className="text-electric-blue" size={24} />
               </div>
-              <div className="bg-electric-blue/20 p-4 rounded-full">
-                <Calendar className="text-electric-blue" size={32} />
+              <div>
+                <p className="text-light-gray text-xs sm:text-sm mb-1">Total Bookings</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold metallic-heading">{stats.totalBookings}</p>
               </div>
             </div>
           </Link>
 
-          <div className="glass-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-light-gray text-sm mb-1">Total Spent</p>
-                <p className="text-3xl font-bold metallic-heading">${stats.totalSpent}</p>
+          <div className="glass-card p-4 sm:p-6">
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="bg-bright-cyan/20 p-3 sm:p-4 rounded-full">
+                <DollarSign className="text-bright-cyan" size={24} />
               </div>
-              <div className="bg-bright-cyan/20 p-4 rounded-full">
-                <DollarSign className="text-bright-cyan" size={32} />
+              <div>
+                <p className="text-light-gray text-xs sm:text-sm mb-1">Total Spent</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold metallic-heading">${stats.totalSpent}</p>
               </div>
             </div>
           </div>
 
           <Link
             to="/client-portal/vehicles"
-            className="glass-card hover:scale-105 transition-transform duration-300"
+            className="glass-card hover:scale-105 transition-transform duration-300 p-4 sm:p-6"
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-light-gray text-sm mb-1">My Vehicles</p>
-                <p className="text-3xl font-bold metallic-heading">{stats.activeVehicles}</p>
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="bg-electric-blue/20 p-3 sm:p-4 rounded-full">
+                <Car className="text-electric-blue" size={24} />
               </div>
-              <div className="bg-electric-blue/20 p-4 rounded-full">
-                <Car className="text-electric-blue" size={32} />
+              <div>
+                <p className="text-light-gray text-xs sm:text-sm mb-1">My Vehicles</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold metallic-heading">{stats.activeVehicles}</p>
               </div>
             </div>
           </Link>
 
-          <div className="glass-card">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-light-gray text-sm mb-1">Upcoming</p>
-                <p className="text-3xl font-bold metallic-heading">{stats.upcomingBookings}</p>
+          <div className="glass-card p-4 sm:p-6">
+            <div className="flex flex-col items-center text-center space-y-2">
+              <div className="bg-bright-cyan/20 p-3 sm:p-4 rounded-full">
+                <Clock className="text-bright-cyan" size={24} />
               </div>
-              <div className="bg-bright-cyan/20 p-4 rounded-full">
-                <Clock className="text-bright-cyan" size={32} />
+              <div>
+                <p className="text-light-gray text-xs sm:text-sm mb-1">Upcoming</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold metallic-heading">{stats.upcomingBookings}</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          <div className="glass-card">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold metallic-heading">My Vehicles</h2>
-              <Link to="/client-portal/vehicles/add" className="btn-secondary text-sm">
+        <div className="grid lg:grid-cols-2 gap-6 lg:gap-8">
+          <div className="glass-card p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-3">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold metallic-heading">My Vehicles</h2>
+              <Link to="/client-portal/vehicles/add" className="btn-secondary text-sm w-full sm:w-auto justify-center">
                 <Plus size={16} className="inline mr-1" />
                 Add Vehicle
               </Link>
             </div>
 
             {vehicles.length === 0 ? (
-              <div className="text-center py-8">
-                <Car className="text-light-gray mx-auto mb-4" size={48} />
-                <p className="text-light-gray mb-4">You Have No Vehicles Yet. </p>
-                <Link to="/client-portal/vehicles/add" className="btn-primary inline-block">
+              <div className="text-center py-6 sm:py-8">
+                <Car className="text-light-gray mx-auto mb-3 sm:mb-4" size={40} />
+                <p className="text-light-gray mb-3 sm:mb-4 text-sm sm:text-base">You Have No Vehicles Yet. </p>
+                <Link to="/client-portal/vehicles/add" className="btn-primary inline-block text-sm">
                   Add Your First Vehicle
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {vehicles.map((vehicle) => (
                   <div
                     key={vehicle.id}
-                    className="bg-navy-dark/50 border border-electric-blue/20 rounded-lg p-4 hover:border-electric-blue transition-all"
+                    className="bg-navy-dark/50 border border-electric-blue/20 rounded-lg p-3 sm:p-4 hover:border-electric-blue transition-all"
                   >
                     <div className="flex justify-between items-start">
-                      <div>
-                        <h3 className="font-bold text-metallic-silver">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-metallic-silver text-sm sm:text-base truncate">
                           {vehicle.year} {vehicle.make} {vehicle.model}
                         </h3>
-                        <p className="text-sm text-light-gray capitalize">{vehicle.size}</p>
+                        <p className="text-xs sm:text-sm text-light-gray capitalize">{vehicle.size}</p>
                         {vehicle.color && (
-                          <p className="text-sm text-light-gray">{vehicle.color}</p>
+                          <p className="text-xs sm:text-sm text-light-gray">{vehicle.color}</p>
                         )}
                       </div>
                       <Link
                         to={`/client-portal/vehicles/${vehicle.id}`}
-                        className="text-electric-blue hover:text-bright-cyan"
+                        className="text-electric-blue hover:text-bright-cyan ml-2 flex-shrink-0"
                       >
-                        <Eye size={20} />
+                        <Eye size={18} />
                       </Link>
                     </div>
                   </div>
@@ -293,47 +295,47 @@ function ClientPortal() {
             )}
           </div>
 
-          <div className="glass-card">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold metallic-heading">Recent Bookings</h2>
-              <Link to="/book-now" className="btn-secondary text-sm">
+          <div className="glass-card p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-3">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold metallic-heading">Recent Bookings</h2>
+              <Link to="/book-now" className="btn-secondary text-sm w-full sm:w-auto justify-center">
                 <Plus size={16} className="inline mr-1" />
                 New Booking
               </Link>
             </div>
 
             {bookings.length === 0 ? (
-              <div className="text-center py-8">
-                <Calendar className="text-light-gray mx-auto mb-4" size={48} />
-                <p className="text-light-gray mb-4">No bookings yet</p>
-                <Link to="/book-now" className="btn-primary inline-block">
+              <div className="text-center py-6 sm:py-8">
+                <Calendar className="text-light-gray mx-auto mb-3 sm:mb-4" size={40} />
+                <p className="text-light-gray mb-3 sm:mb-4 text-sm sm:text-base">No bookings yet</p>
+                <Link to="/book-now" className="btn-primary inline-block text-sm">
                   Book Your First Service
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {bookings.map((booking) => (
                   <div
                     key={booking.id}
-                    className="bg-navy-dark/50 border border-electric-blue/20 rounded-lg p-4"
+                    className="bg-navy-dark/50 border border-electric-blue/20 rounded-lg p-3 sm:p-4"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="font-bold text-metallic-silver">{booking.booking_number}</p>
-                        <p className="text-sm text-light-gray">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-metallic-silver text-sm sm:text-base truncate">{booking.booking_number}</p>
+                        <p className="text-xs sm:text-sm text-light-gray">
                           {format(new Date(booking.preferred_date), 'MMM dd, yyyy')}
                         </p>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(booking.status)}`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${getStatusColor(booking.status)}`}>
                         {booking.status}
                       </span>
                     </div>
-                    <p className="text-light-gray text-sm capitalize">{booking.service_type} Detail</p>
+                    <p className="text-light-gray text-xs sm:text-sm capitalize">{booking.service_type} Detail</p>
                     <div className="flex justify-between items-center mt-3 pt-3 border-t border-electric-blue/20">
-                      <span className="text-bright-cyan font-bold">${booking.total}</span>
+                      <span className="text-bright-cyan font-bold text-sm sm:text-base">${booking.total}</span>
                       <Link
                         to={`/client-portal/bookings/${booking.id}`}
-                        className="text-electric-blue hover:text-bright-cyan text-sm"
+                        className="text-electric-blue hover:text-bright-cyan text-xs sm:text-sm"
                       >
                         View Details →
                       </Link>
@@ -345,34 +347,34 @@ function ClientPortal() {
           </div>
         </div>
 
-        <div className="glass-card">
-          <h2 className="text-2xl font-bold metallic-heading mb-6">Quick Actions</h2>
-          <div className="grid md:grid-cols-3 gap-4">
+        <div className="glass-card p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold metallic-heading mb-4 sm:mb-6">Quick Actions</h2>
+          <div className="grid sm:grid-cols-3 gap-3 sm:gap-4">
             <Link
               to="/book-now"
-              className="block bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-6 hover:bg-electric-blue/30 transition-all text-center"
+              className="block bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-4 sm:p-6 hover:bg-electric-blue/30 transition-all text-center"
             >
-              <Calendar className="text-electric-blue mx-auto mb-3" size={32} />
-              <h3 className="font-bold text-metallic-silver mb-2">Book Service</h3>
-              <p className="text-sm text-light-gray">Schedule a new detailing appointment</p>
+              <Calendar className="text-electric-blue mx-auto mb-2 sm:mb-3" size={24} />
+              <h3 className="font-bold text-metallic-silver mb-1 sm:mb-2 text-sm sm:text-base">Book Service</h3>
+              <p className="text-xs sm:text-sm text-light-gray">Schedule a new detailing appointment</p>
             </Link>
 
             <Link
               to="/client-portal/vehicles"
-              className="block bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-6 hover:bg-electric-blue/30 transition-all text-center"
+              className="block bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-4 sm:p-6 hover:bg-electric-blue/30 transition-all text-center"
             >
-              <Car className="text-electric-blue mx-auto mb-3" size={32} />
-              <h3 className="font-bold text-metallic-silver mb-2">Manage Vehicles</h3>
-              <p className="text-sm text-light-gray">Add or update your vehicle information</p>
+              <Car className="text-electric-blue mx-auto mb-2 sm:mb-3" size={24} />
+              <h3 className="font-bold text-metallic-silver mb-1 sm:mb-2 text-sm sm:text-base">Manage Vehicles</h3>
+              <p className="text-xs sm:text-sm text-light-gray">Add or update your vehicle information</p>
             </Link>
 
             <Link
               to="/client-portal/settings"
-              className="block bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-6 hover:bg-electric-blue/30 transition-all text-center"
+              className="block bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-4 sm:p-6 hover:bg-electric-blue/30 transition-all text-center"
             >
-              <Settings className="text-electric-blue mx-auto mb-3" size={32} />
-              <h3 className="font-bold text-metallic-silver mb-2">Settings</h3>
-              <p className="text-sm text-light-gray">Manage your profile and payment methods</p>
+              <Settings className="text-electric-blue mx-auto mb-2 sm:mb-3" size={24} />
+              <h3 className="font-bold text-metallic-silver mb-1 sm:mb-2 text-sm sm:text-base">Settings</h3>
+              <p className="text-xs sm:text-sm text-light-gray">Manage your profile and payment methods</p>
             </Link>
           </div>
         </div>

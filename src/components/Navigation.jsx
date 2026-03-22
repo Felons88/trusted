@@ -38,41 +38,45 @@ function Navigation() {
       }`}
     >
       <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-20">
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="text-2xl font-bold metallic-heading glow-text">
+        <div className="flex items-center justify-between h-16 xs:h-20">
+          <Link to="/" className="flex items-center space-x-2 xs:space-x-3">
+            <div className="text-lg xs:text-xl sm:text-2xl font-bold metallic-heading glow-text">
               Trusted Mobile Detailing
             </div>
           </Link>
 
-          <div className="hidden lg:flex items-center space-x-8">
+          <div className="hidden md:flex items-center space-x-4 lg:space-x-8">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
                 onClick={link.onClick}
-                className={`text-sm font-medium transition-all duration-300 hover:text-bright-cyan ${
+                className={`text-xs sm:text-sm font-medium transition-all duration-300 hover:text-bright-cyan ${
                   location.pathname === link.to ? 'text-electric-blue' : 'text-light-gray'
                 }`}
               >
                 {link.label}
               </Link>
             ))}
-            <Link to="/quote" className="btn-primary">
+            <Link to="/quote" className="btn-primary text-xs sm:text-sm px-4 sm:px-6 py-2">
               Get Quote
             </Link>
           </div>
 
           <button
-            className="lg:hidden text-metallic-silver"
+            className="md:hidden text-metallic-silver p-1"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
           >
-            {isMobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
 
-        {isMobileMenuOpen && (
-          <div className="lg:hidden pb-6 fade-in">
+        {/* Mobile Menu */}
+        <div className={`md:hidden transition-all duration-300 ease-in-out overflow-hidden ${
+          isMobileMenuOpen ? 'max-h-96 pb-6' : 'max-h-0'
+        }`}>
+          <div className="pt-4 space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
@@ -83,22 +87,24 @@ function Navigation() {
                   }
                   setIsMobileMenuOpen(false)
                 }}
-                className={`block py-3 text-sm font-medium transition-colors ${
-                  location.pathname === link.to ? 'text-electric-blue' : 'text-light-gray'
-                } hover:text-bright-cyan`}
+                className={`block py-3 px-4 text-sm font-medium transition-all duration-200 rounded-lg ${
+                  location.pathname === link.to 
+                    ? 'text-electric-blue bg-electric-blue/10' 
+                    : 'text-light-gray hover:text-bright-cyan hover:bg-navy-dark/50'
+                }`}
               >
                 {link.label}
               </Link>
             ))}
             <Link
               to="/quote"
-              className="btn-primary inline-block mt-4"
+              className="btn-primary inline-block mt-4 mx-4 text-sm"
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Get Quote
             </Link>
           </div>
-        )}
+        </div>
       </div>
     </nav>
   )
