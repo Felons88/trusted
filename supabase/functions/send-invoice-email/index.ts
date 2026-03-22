@@ -64,7 +64,7 @@ serve(async (req) => {
       body: JSON.stringify({
         sender: {
           name: 'Trusted Mobile Detailing',
-          email: 'invoices@trustedmobile detailing.com'
+          email: 'invoices@trustedmobiledetailing.com'
         },
         to: [{
           email: clientEmail,
