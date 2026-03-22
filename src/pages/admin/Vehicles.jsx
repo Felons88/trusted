@@ -222,7 +222,11 @@ function Vehicles() {
                     >
                       <Eye size={20} />
                     </Link>
-                    <button className="text-electric-blue hover:text-bright-cyan">
+                    <button 
+                      onClick={() => navigate(`/admin/vehicles/${vehicle.id}/edit`)}
+                      className="text-electric-blue hover:text-bright-cyan"
+                      title="Edit vehicle"
+                    >
                       <Edit size={20} />
                     </button>
                     <button

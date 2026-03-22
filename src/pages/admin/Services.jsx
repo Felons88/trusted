@@ -116,9 +116,19 @@ function Services() {
           <h1 className="text-4xl font-bold metallic-heading mb-2">Services & Pricing</h1>
           <p className="text-light-gray">Manage service packages and add-ons</p>
         </div>
-        <button className="btn-primary">
+        <button 
+          onClick={() => navigate('/admin/services/new')}
+          className="btn-primary mr-2"
+        >
           <Plus size={20} className="inline mr-2" />
           Add Service
+        </button>
+        <button 
+          onClick={() => navigate('/admin/addons/new')}
+          className="btn-primary"
+        >
+          <Plus size={20} className="inline mr-2" />
+          Add Add-on
         </button>
       </div>
 
