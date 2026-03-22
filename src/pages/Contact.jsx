@@ -28,8 +28,8 @@ function Contact() {
     {
       icon: Phone,
       title: 'Phone',
-      content: '(123) 456-7890',
-      link: 'tel:+11234567890',
+      content: '612-525-3137',
+      link: 'tel:+16125253137',
     },
     {
       icon: Mail,
@@ -44,8 +44,8 @@ function Contact() {
     },
     {
       icon: MapPin,
-      title: 'Service Area',
-      content: 'Elk River, MN\n& Surrounding Areas',
+      title: 'Business Location',
+      content: '329 Morton Ave\nElk River, MN 55330',
     },
   ]
 
@@ -175,13 +175,17 @@ function Contact() {
                   <h2 className="text-3xl font-bold metallic-heading mb-6">Visit Our Area</h2>
                   
                   <div className="aspect-square bg-navy-dark rounded-lg overflow-hidden mb-6 relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <MapPin className="text-electric-blue mx-auto mb-4" size={64} />
-                        <p className="text-metallic-silver text-lg">Service Area Map</p>
-                        <p className="text-light-gray text-sm">Elk River & Surrounding Cities</p>
-                      </div>
-                    </div>
+                    <iframe
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2822.4157433299!2d-93.378898!3d45.3038!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x52b2d5e5e5e5e5e5%3A0x5e5e5e5e5e5e5e5e!2s329%20Morton%20Ave%2C%20Elk%20River%2C%20MN%2055330!5e0!3m2!1sen!2sus!4v1234567890"
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen=""
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      className="w-full h-full"
+                      title="Trusted Mobile Detailing Location - 329 Morton Ave, Elk River, MN 55330"
+                    />
                   </div>
                   
                   <div className="space-y-4">
