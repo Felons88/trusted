@@ -103,10 +103,10 @@ function PaymentContent() {
           },
           amount: Math.round((invoice?.total || 0) * 100), // Convert to cents
           currency: 'usd',
-          description: `Invoice #${invoice?.invoice_number || invoiceId} - Trusted Mobile Detailing`,
+          description: `Invoice #${invoice?.invoice_number || id} - Trusted Mobile Detailing`,
           metadata: {
-            invoice_id: invoiceId,
-            invoice_number: invoice?.invoice_number || invoiceId,
+            invoice_id: id,
+            invoice_number: invoice?.invoice_number || id,
           },
         },
       })
@@ -122,7 +122,7 @@ function PaymentContent() {
             paid_at: new Date().toISOString(),
             stripe_payment_intent_id: paymentIntent.id
           })
-          .eq('id', invoiceId)
+          .eq('id', id)
 
         setSuccess(true)
         setTimeout(() => {
