@@ -11,7 +11,7 @@ const supabase = createClient(
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
 
-function Payment() {
+function PaymentContent() {
   const [invoice, setInvoice] = useState(null)
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
@@ -306,6 +306,15 @@ function Payment() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Wrapper component that provides Stripe Elements context
+function Payment() {
+  return (
+    <Elements stripe={stripePromise}>
+      <PaymentContent />
+    </Elements>
   )
 }
 
