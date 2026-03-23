@@ -24,12 +24,30 @@ function PaymentContent() {
   const elements = useElements()
 
   useEffect(() => {
+    console.log('Payment component loaded, invoiceId:', invoiceId)
     if (invoiceId) {
       fetchInvoice()
+      // Add timeout to prevent infinite loading
+      const timeout = setTimeout(() => {
+        if (loading) {
+          console.error('Invoice fetch timed out')
+          setError('Loading timed out. Please refresh the page.')
+          setLoading(false)
+        }
+      }, 10000) // 10 seconds timeout
+      
+      return () => clearTimeout(timeout)
+    } else {
+      console.error('No invoiceId provided')
+      setError('No invoice ID provided')
+      setLoading(false)
     }
   }, [invoiceId])
 
   const fetchInvoice = async () => {
+    console.log('Fetching invoice with ID:', invoiceId)
+    setLoading(true)
+    
     try {
       const { data, error } = await supabase
         .from('invoices')
@@ -41,11 +59,17 @@ function PaymentContent() {
         .eq('id', invoiceId)
         .single()
 
+      console.log('Invoice fetch result:', { data, error })
+
       if (error) {
         console.error('Invoice fetch error:', error)
-        setError('Invoice not found')
+        setError(`Invoice not found: ${error.message}`)
       } else if (data) {
+        console.log('Invoice loaded successfully:', data)
         setInvoice(data)
+      } else {
+        console.error('No invoice data returned')
+        setError('Invoice not found')
       }
     } catch (err) {
       console.error('Fetch error:', err)
