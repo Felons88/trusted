@@ -49,6 +49,8 @@ import InvoicePayment from './pages/admin/InvoicePayment'
 import Payments from './pages/admin/Payments'
 import Messages from './pages/admin/Messages'
 import Settings from './pages/admin/Settings'
+import Payment from './pages/Payment'
+import Success from './pages/Success'
 
 import ClientPortal from './pages/client/ClientPortal'
 import ClientVehicles from './pages/client/Vehicles'
@@ -130,6 +132,9 @@ function App() {
             <Route path="messages" element={<Messages />} />
             <Route path="settings" element={<Settings />} />
           </Route>
+
+          <Route path="/payment/:id" element={<Payment />} />
+          <Route path="/success" element={<Success />} />
 
           <Route path="/invoice-payment/:id" element={<InvoicePayment />} />
 
