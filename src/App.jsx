@@ -128,8 +128,8 @@ function App() {
             <Route path="quote-request/new" element={<QuoteRequest />} />
             <Route path="quote-archive" element={<QuoteArchive />} />
             <Route path="invoices" element={<Invoices />} />
-            <Route path="invoices/new" element={<NewInvoice />} />
             <Route path="invoices/:id" element={<InvoiceDetail />} />
+            <Route path="invoices/new" element={<NewInvoice />} />
             <Route path="payments" element={<Payments />} />
             <Route path="messages" element={<Messages />} />
             <Route path="settings" element={<Settings />} />
