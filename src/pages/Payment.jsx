@@ -96,21 +96,15 @@ function PaymentContent() {
       console.log('Invoice data:', invoice)
       console.log('Payment amount:', Math.round((invoice?.total || 0) * 100))
       
-      const { error: paymentError, paymentIntent } = await stripe.confirmCardPayment({
+      const { error: paymentError, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
+          return_url: `${window.location.origin}/success`,
           payment_method_data: {
             billing_details: {
               name: invoice?.clients?.full_name,
               email: invoice?.clients?.email,
             },
-          },
-          amount: Math.round((invoice?.total || 0) * 100), // Convert to cents
-          currency: 'usd',
-          description: `Invoice #${invoice?.invoice_number || id} - Trusted Mobile Detailing`,
-          metadata: {
-            invoice_id: id,
-            invoice_number: invoice?.invoice_number || id,
           },
         },
       })
