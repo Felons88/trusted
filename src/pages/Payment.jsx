@@ -28,16 +28,6 @@ function PaymentContent() {
     console.log('Payment component loaded, invoiceId:', id)
     if (id) {
       fetchInvoice()
-      // Add timeout to prevent infinite loading
-      const timeout = setTimeout(() => {
-        if (loading) {
-          console.error('Invoice fetch timed out')
-          setError('Loading timed out. Please refresh the page.')
-          setLoading(false)
-        }
-      }, 10000) // 10 seconds timeout
-      
-      return () => clearTimeout(timeout)
     } else {
       console.error('No invoiceId provided')
       setError('No invoice ID provided')
@@ -50,6 +40,10 @@ function PaymentContent() {
     setLoading(true)
     
     try {
+      // Add timeout to the fetch request itself
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 15000) // 15 second timeout
+      
       const { data, error } = await supabase
         .from('invoices')
         .select(`
@@ -59,7 +53,9 @@ function PaymentContent() {
         `)
         .eq('id', id)
         .single()
+        .abortSignal(controller.signal)
 
+      clearTimeout(timeoutId)
       console.log('Invoice fetch result:', { data, error })
 
       if (error) {
@@ -74,7 +70,11 @@ function PaymentContent() {
       }
     } catch (err) {
       console.error('Fetch error:', err)
-      setError('Failed to load invoice')
+      if (err.name === 'AbortError') {
+        setError('Request timed out. Please try again.')
+      } else {
+        setError('Failed to load invoice')
+      }
     } finally {
       setLoading(false)
     }
