@@ -233,7 +233,7 @@ function NewInvoice() {
         invoice_number: invoiceNumber,
         invoice_date: new Date().toISOString(), // Full ISO date format
         due_date: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        status: 'draft',
+        status: 'pending', // Changed from 'draft' to 'pending'
         total: calculateTotal(),
         notes: notes
       })
@@ -246,7 +246,7 @@ function NewInvoice() {
           invoice_number: invoiceNumber,
           invoice_date: new Date().toISOString(), // Full ISO date format
           due_date: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          status: 'draft',
+          status: 'pending', // Changed from 'draft' to 'pending'
           total: calculateTotal(),
           notes: notes
         })
