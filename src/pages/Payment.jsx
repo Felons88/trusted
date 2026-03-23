@@ -80,6 +80,281 @@ function PaymentContent() {
     }
   }
 
+  const sendPaymentReceipt = async (invoiceData, paymentIntent) => {
+    try {
+      // Get last 4 digits of card
+      const last4 = paymentIntent.payment_method?.card?.last4 || '****'
+      
+      // Generate receipt HTML
+      const receiptHTML = generateReceiptHTML(invoiceData, paymentIntent, last4)
+      
+      // Send email via Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('send-payment-receipt', {
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
+        body: {
+          toEmail: invoiceData.clients?.email,
+          subject: `Payment Receipt - Invoice ${invoiceData.invoice_number}`,
+          html: receiptHTML,
+          invoiceData: invoiceData,
+          paymentIntent: paymentIntent
+        }
+      })
+
+      if (error) {
+        console.error('Email send error:', error)
+        // Don't show error to user, just log it
+      } else {
+        console.log('Payment receipt email sent successfully')
+      }
+    } catch (error) {
+      console.error('Failed to send payment receipt:', error)
+    }
+  }
+
+  const generateReceiptHTML = (invoiceData, paymentIntent, last4) => {
+    const items = invoiceData.invoice_items || []
+    const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
+    const tax = subtotal * 0.06875 // 6.875% tax rate
+    const total = invoiceData.total || subtotal + tax
+
+    return `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Payment Receipt - Trusted Mobile Detailing</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+          }
+          .header {
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+          }
+          .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            font-weight: 700;
+          }
+          .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 16px;
+          }
+          .content {
+            background: white;
+            padding: 40px 30px;
+          }
+          .receipt-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+          }
+          .info-item h3 {
+            margin: 0 0 5px 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #888;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+          }
+          .info-item p {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+          }
+          .items-table {
+            width: 100%;
+            margin-bottom: 20px;
+          }
+          .items-table th {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #888;
+            font-weight: 600;
+            border-bottom: 2px solid #e9ecef;
+          }
+          .items-table td {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+          }
+          .items-table .quantity {
+            text-align: center;
+            color: #666;
+          }
+          .items-table .price {
+            text-align: right;
+            font-weight: 600;
+            color: #333;
+          }
+          .totals {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #f0f0f0;
+          }
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+          }
+          .total-row.grand-total {
+            font-size: 18px;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #e9ecef;
+          }
+          .payment-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+          }
+          .payment-info h3 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #333;
+          }
+          .payment-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+          }
+          .payment-details p {
+            margin: 0;
+            font-size: 14px;
+          }
+          .payment-details strong {
+            color: #333;
+          }
+          .footer {
+            padding: 30px;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+          }
+          .footer p {
+            margin: 5px 0;
+            opacity: 0.8;
+          }
+          .brand {
+            font-weight: 700;
+            font-size: 24px;
+            margin-bottom: 5px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <div class="brand">Trusted Mobile Detailing</div>
+            <h1>Payment Receipt</h1>
+            <p>Thank you for your payment! Your transaction has been processed successfully.</p>
+          </div>
+          
+          <div class="content">
+            <div class="receipt-info">
+              <div class="info-item">
+                <h3>Receipt Number</h3>
+                <p>RCPT-${invoiceData.invoice_number}-${paymentIntent.id.slice(-8)}</p>
+              </div>
+              <div class="info-item">
+                <h3>Payment Date</h3>
+                <p>${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              </div>
+              <div class="info-item">
+                <h3>Customer</h3>
+                <p>${invoiceData.clients?.full_name || 'N/A'}</p>
+              </div>
+              <div class="info-item">
+                <h3>Invoice Number</h3>
+                <p>${invoiceData.invoice_number}</p>
+              </div>
+            </div>
+
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Service Description</th>
+                  <th class="quantity">Qty</th>
+                  <th class="price">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map(item => `
+                  <tr>
+                    <td>${item.description}</td>
+                    <td class="quantity">${item.quantity}</td>
+                    <td class="price">$${(item.unit_price * item.quantity).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="totals">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span>$${subtotal.toFixed(2)}</span>
+              </div>
+              <div class="total-row">
+                <span>Tax (6.875%):</span>
+                <span>$${tax.toFixed(2)}</span>
+              </div>
+              <div class="total-row grand-total">
+                <span>Total Paid:</span>
+                <span>$${total.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div class="payment-info">
+              <h3>Payment Information</h3>
+              <div class="payment-details">
+                <p><strong>Payment Method:</strong> Credit Card ending in ${last4}</p>
+                <p><strong>Transaction ID:</strong> ${paymentIntent.id}</p>
+                <p><strong>Status:</strong> <span style="color: #10b981;">✓ Paid</span></p>
+                <p><strong>Amount:</strong> $${total.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer">
+            <div class="brand">Trusted Mobile Detailing</div>
+            <p>Professional Auto Detailing Services</p>
+            <p>Questions? Contact us at support@trustedmobiledetailing.com</p>
+            <p>This receipt serves as proof of payment for your records.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault()
     setProcessing(true)
@@ -150,6 +425,10 @@ function PaymentContent() {
           setError('Payment successful but failed to update invoice. Please contact support.')
         } else {
           console.log('Invoice updated successfully')
+          
+          // Send payment receipt email
+          await sendPaymentReceipt(invoice, paymentIntent)
+          
           setSuccess(true)
           setTimeout(() => {
             navigate('/success')
