@@ -261,7 +261,8 @@ function NewInvoice() {
       // Create invoice items
       const items = selectedServices.map(service => ({
         invoice_id: invoice.id,
-        service_id: service.id,
+        item_type: 'service', // Use item_type instead of service_id
+        item_id: service.id, // Use item_id instead of service_id
         description: service.name,
         quantity: service.quantity,
         unit_price: service.unit_price,
