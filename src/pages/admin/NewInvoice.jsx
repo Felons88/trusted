@@ -226,6 +226,11 @@ function NewInvoice() {
       return
     }
 
+    if (selectedServices.length === 0) {
+      toast.error('Please add at least one service to the invoice')
+      return
+    }
+
     setSaving(true)
     try {
       console.log('Creating invoice with data:', {
@@ -269,9 +274,14 @@ function NewInvoice() {
         total_price: service.unit_price * service.quantity
       }))
 
+      console.log('Creating invoice items:', items)
+
       const { error: itemsError } = await supabase
         .from('invoice_items')
         .insert(items)
+        .select()
+
+      console.log('Invoice items error:', itemsError)
 
       if (itemsError) throw itemsError
 
