@@ -3,13 +3,13 @@
 
 class StripeService {
   constructor() {
-    this.publishableKey = import.meta.env.VITE_STRIPE_PUBLIC_KEY
+    this.publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
     this.baseUrl = import.meta.env.VITE_APP_URL || 'http://localhost:5173'
   }
 
   // Initialize Stripe
   init() {
-    if (!this.publishableKey || this.publishableKey === 'your_stripe_public_key') {
+    if (!this.publishableKey || this.publishableKey === 'your_stripe_publishable_key') {
       throw new Error('Stripe publishable key not configured')
     }
     
