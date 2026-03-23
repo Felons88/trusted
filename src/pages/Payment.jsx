@@ -92,6 +92,10 @@ function PaymentContent() {
     }
 
     try {
+      console.log('Starting payment process...')
+      console.log('Invoice data:', invoice)
+      console.log('Payment amount:', Math.round((invoice?.total || 0) * 100))
+      
       const { error: paymentError, paymentIntent } = await stripe.confirmCardPayment({
         elements,
         confirmParams: {
@@ -111,11 +115,16 @@ function PaymentContent() {
         },
       })
 
+      console.log('Payment result:', { paymentError, paymentIntent })
+
       if (paymentError) {
+        console.error('Stripe payment error:', paymentError)
         setError(paymentError.message)
       } else if (paymentIntent) {
+        console.log('Payment successful:', paymentIntent)
+        
         // Update invoice status to paid
-        await supabase
+        const { error: updateError } = await supabase
           .from('invoices')
           .update({ 
             status: 'paid',
@@ -124,14 +133,20 @@ function PaymentContent() {
           })
           .eq('id', id)
 
-        setSuccess(true)
-        setTimeout(() => {
-          navigate('/success')
-        }, 3000)
+        if (updateError) {
+          console.error('Invoice update error:', updateError)
+          setError('Payment successful but failed to update invoice. Please contact support.')
+        } else {
+          console.log('Invoice updated successfully')
+          setSuccess(true)
+          setTimeout(() => {
+            navigate('/success')
+          }, 3000)
+        }
       }
     } catch (err) {
       console.error('Payment error:', err)
-      setError('Payment failed. Please try again.')
+      setError(`Payment failed: ${err.message || 'Unknown error'}`)
     } finally {
       setProcessing(false)
     }
