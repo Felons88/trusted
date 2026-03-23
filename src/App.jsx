@@ -97,6 +97,14 @@ function App() {
         />
 
         <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/exterior-detailing" element={<ExteriorDetailing />} />
+          <Route path="/interior-detailing" element={<InteriorDetailing />} />
+          <Route path="/add-ons" element={<AddOns />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/reviews" element={<Reviews />} />
+          <Route path="/service-area" element={<ServiceArea />} />
+          <Route path="/book-now" element={<BookNowV2 />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/quote" element={<Quote />} />
           <Route path="/login" element={<Login />} />
@@ -127,9 +135,9 @@ function App() {
             <Route path="quote-requests" element={<QuoteRequests />} />
             <Route path="quote-request/new" element={<QuoteRequest />} />
             <Route path="quote-archive" element={<QuoteArchive />} />
-            <Route path="invoices" element={<Invoices />} />
             <Route path="invoices/:id" element={<InvoiceDetail />} />
             <Route path="invoices/new" element={<NewInvoice />} />
+            <Route path="invoices" element={<Invoices />} />
             <Route path="payments" element={<Payments />} />
             <Route path="messages" element={<Messages />} />
             <Route path="settings" element={<Settings />} />
@@ -137,7 +145,6 @@ function App() {
 
           <Route path="/payment/:id" element={<Payment />} />
           <Route path="/success" element={<Success />} />
-
           <Route path="/invoice-payment/:id" element={<InvoicePayment />} />
 
           <Route path="/client-portal" element={
@@ -176,23 +183,7 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="*" element={
-            <>
-              <Navigation />
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/exterior-detailing" element={<ExteriorDetailing />} />
-                <Route path="/interior-detailing" element={<InteriorDetailing />} />
-                <Route path="/add-ons" element={<AddOns />} />
-                <Route path="/gallery" element={<Gallery />} />
-                <Route path="/reviews" element={<Reviews />} />
-                <Route path="/service-area" element={<ServiceArea />} />
-                <Route path="/book-now" element={<BookNowV2 />} />
-                <Route path="/contact" element={<Contact />} />
-              </Routes>
-              <FloatingCallButton />
-            </>
-          } />
+          <Route path="*" element={<div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold text-light-gray">404 - Page Not Found</h1></div>} />
         </Routes>
         </div>
       </Router>

@@ -148,15 +148,33 @@ function BookingEdit() {
 
   const calculatePrice = () => {
     const service = services.find(s => s.name === formData.service_type)
-    const basePrice = service?.price || 50
     
-    let sizeMultiplier = 1
-    if (selectedVehicle?.vehicle_size === 'suv') sizeMultiplier = 1.3
-    if (selectedVehicle?.vehicle_size === 'truck') sizeMultiplier = 1.5
-    if (selectedVehicle?.vehicle_size === 'van') sizeMultiplier = 1.4
+    let basePrice = 50 // Default price if no service found
     
-    const totalPrice = basePrice * sizeMultiplier
-    setFormData(prev => ({ ...prev, total_cost: totalPrice }))
+    if (service && selectedVehicle) {
+      const size = selectedVehicle.vehicle_size || selectedVehicle.size
+      switch (size) {
+        case 'sedan':
+          basePrice = service.base_price_sedan || 50
+          break
+        case 'suv':
+          basePrice = service.base_price_suv || 50
+          break
+        case 'truck':
+          basePrice = service.base_price_truck || 50
+          break
+        case 'van':
+          basePrice = service.base_price_van || 50
+          break
+        default:
+          basePrice = service.base_price_sedan || 50
+      }
+    } else if (service) {
+      // Use sedan price as default if no vehicle selected
+      basePrice = service.base_price_sedan || 50
+    }
+    
+    setFormData(prev => ({ ...prev, total_cost: basePrice }))
   }
 
   const checkExistingBookings = async (date) => {
@@ -267,12 +285,13 @@ function BookingEdit() {
       const updateData = {
         client_id: formData.client_id,
         vehicle_id: formData.vehicle_id,
+        service_id: services.find(s => s.name === formData.service_type)?.id,
         service_type: formData.service_type,
         vehicle_size: selectedVehicle?.vehicle_size || 'sedan',
-        service_address: formData.service_address,
-        service_city: formData.service_city,
-        service_state: formData.service_state,
-        service_zip: formData.service_zip,
+        service_address: selectedClient?.address || 'TBD',
+        service_city: parsedAddress.city,
+        service_state: parsedAddress.state,
+        service_zip: parsedAddress.zip,
         subtotal: formData.total_cost,
         preferred_date: formData.booking_date,
         preferred_time: formData.booking_time,
@@ -303,11 +322,46 @@ function BookingEdit() {
   }
 
   const serviceTypes = [
-    { value: 'exterior', label: 'Exterior Detail', price: 50 },
-    { value: 'interior', label: 'Interior Detail', price: 60 },
-    { value: 'full', label: 'Full Detail', price: 100 },
-    { value: 'premium', label: 'Premium Detail', price: 150 }
+    { value: 'exterior', label: 'Exterior Detail', basePrice: 50 },
+    { value: 'interior', label: 'Interior Detail', basePrice: 60 },
+    { value: 'full', label: 'Full Detail', basePrice: 100 },
+    { value: 'premium', label: 'Premium Detail', basePrice: 150 }
   ]
+
+  // Get dynamic pricing based on selected vehicle
+  const getServiceTypesWithPricing = () => {
+    return serviceTypes.map(serviceType => {
+      let price = serviceType.basePrice
+      
+      if (selectedVehicle) {
+        const service = services.find(s => s.name === serviceType.value)
+        if (service) {
+          const size = selectedVehicle.vehicle_size || selectedVehicle.size
+          switch (size) {
+            case 'sedan':
+              price = service.base_price_sedan || serviceType.basePrice
+              break
+            case 'suv':
+              price = service.base_price_suv || serviceType.basePrice
+              break
+            case 'truck':
+              price = service.base_price_truck || serviceType.basePrice
+              break
+            case 'van':
+              price = service.base_price_van || serviceType.basePrice
+              break
+            default:
+              price = service.base_price_sedan || serviceType.basePrice
+          }
+        }
+      }
+      
+      return {
+        ...serviceType,
+        price: price
+      }
+    })
+  }
 
   if (loading) {
     return (
@@ -444,25 +498,20 @@ function BookingEdit() {
               <div>
                 <label className="block text-sm text-light-gray mb-2">Service Type</label>
                 <div className="space-y-3">
-                  {serviceTypes.map(service => (
-                    <label
-                      key={service.value}
-                      className="block bg-navy-light/30 rounded-lg p-4 border border-electric-blue/20 cursor-pointer hover:bg-navy-light/50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <input
-                            type="radio"
-                            name="service_type"
-                            value={service.value}
-                            checked={formData.service_type === service.value}
-                            onChange={(e) => setFormData(prev => ({ ...prev, service_type: e.target.value }))}
-                            className="mr-3"
-                          />
-                          <span className="text-light-gray font-medium">{service.label}</span>
-                        </div>
-                        <span className="text-green-400 font-semibold">${service.price}</span>
+                  {getServiceTypesWithPricing().map(service => (
+                    <label key={service.value} className="flex items-center justify-between p-3 bg-navy-light rounded-lg cursor-pointer hover:bg-navy-light/80 transition-colors">
+                      <div className="flex items-center space-x-3">
+                        <input
+                          type="radio"
+                          name="service_type"
+                          value={service.value}
+                          checked={formData.service_type === service.value}
+                          onChange={(e) => setFormData(prev => ({ ...prev, service_type: e.target.value }))}
+                          className="w-4 h-4 text-electric-blue focus:ring-electric-blue focus:ring-offset-navy-deep"
+                        />
+                        <span className="text-light-gray font-medium">{service.label}</span>
                       </div>
+                      <span className="text-green-400 font-semibold">${service.price}</span>
                     </label>
                   ))}
                 </div>

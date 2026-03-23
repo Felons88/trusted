@@ -4,7 +4,8 @@ import { useAuthStore } from '../../store/authStore'
 import {
   LayoutDashboard, Calendar, Users, Car, Package,
   DollarSign, Mail, FileText, Settings, LogOut,
-  Menu, X, MessageSquare, Star
+  Menu, X, MessageSquare, Star,
+  Plus
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 

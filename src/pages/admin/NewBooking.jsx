@@ -134,15 +134,33 @@ function NewBooking() {
     // Only consider active services for pricing
     const activeServices = services.filter(s => s.is_active)
     const service = activeServices.find(s => s.name === formData.service_type)
-    const basePrice = service?.price || 50 // Default price if no service found
     
-    let sizeMultiplier = 1
-    if (selectedVehicle?.vehicle_size === 'suv') sizeMultiplier = 1.3
-    if (selectedVehicle?.vehicle_size === 'truck') sizeMultiplier = 1.5
-    if (selectedVehicle?.vehicle_size === 'van') sizeMultiplier = 1.4
+    let basePrice = 50 // Default price if no service found
     
-    const totalPrice = basePrice * sizeMultiplier
-    setFormData(prev => ({ ...prev, total_cost: totalPrice }))
+    if (service && selectedVehicle) {
+      const size = selectedVehicle.vehicle_size || selectedVehicle.size
+      switch (size) {
+        case 'sedan':
+          basePrice = service.base_price_sedan || 50
+          break
+        case 'suv':
+          basePrice = service.base_price_suv || 50
+          break
+        case 'truck':
+          basePrice = service.base_price_truck || 50
+          break
+        case 'van':
+          basePrice = service.base_price_van || 50
+          break
+        default:
+          basePrice = service.base_price_sedan || 50
+      }
+    } else if (service) {
+      // Use sedan price as default if no vehicle selected
+      basePrice = service.base_price_sedan || 50
+    }
+    
+    setFormData(prev => ({ ...prev, total_cost: basePrice }))
   }
 
   const checkExistingBookings = async (date) => {
@@ -257,6 +275,7 @@ function NewBooking() {
         .insert({
           client_id: formData.client_id,
           vehicle_id: formData.vehicle_id,
+          service_id: services.find(s => s.name === formData.service_type)?.id,
           service_type: formData.service_type,
           vehicle_size: selectedVehicle?.vehicle_size || 'sedan',
           service_address: selectedClient?.address || 'TBD',
@@ -312,11 +331,38 @@ function NewBooking() {
 
   const getServiceTypes = () => {
     const activeServices = services.filter(s => s.is_active)
-    return activeServices.map(service => ({
-      value: service.name,
-      label: service.name.charAt(0).toUpperCase() + service.name.slice(1),
-      price: service.price
-    }))
+    return activeServices.map(service => {
+      let price = 50 // Default price
+      
+      if (selectedVehicle) {
+        const size = selectedVehicle.vehicle_size || selectedVehicle.size
+        switch (size) {
+          case 'sedan':
+            price = service.base_price_sedan || 50
+            break
+          case 'suv':
+            price = service.base_price_suv || 50
+            break
+          case 'truck':
+            price = service.base_price_truck || 50
+            break
+          case 'van':
+            price = service.base_price_van || 50
+            break
+          default:
+            price = service.base_price_sedan || 50
+        }
+      } else {
+        // Use sedan price as default
+        price = service.base_price_sedan || 50
+      }
+
+      return {
+        value: service.name,
+        label: service.name.charAt(0).toUpperCase() + service.name.slice(1),
+        price: price
+      }
+    })
   }
 
   if (loading) {
