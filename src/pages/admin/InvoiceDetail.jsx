@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { ArrowLeft, FileText, Download, Edit, Mail, DollarSign, Calendar, User, CheckCircle, Clock } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import toast from 'react-hot-toast'
 
 function InvoiceDetail() {
   const { id } = useParams()
@@ -45,7 +46,7 @@ function InvoiceDetail() {
 
   const handleSendEmail = async () => {
     if (!invoice?.clients?.email) {
-      alert('Client email address is required')
+      toast.error('Client email address is required')
       return
     }
 
@@ -72,11 +73,11 @@ function InvoiceDetail() {
 
       if (updateError) throw updateError
 
-      alert('Invoice sent successfully!')
+      toast.success('Invoice sent successfully!')
       fetchInvoice() // Refresh invoice data
     } catch (error) {
       console.error('Error sending invoice:', error)
-      alert('Failed to send invoice: ' + error.message)
+      toast.error('Failed to send invoice: ' + error.message)
     }
   }
 
@@ -100,10 +101,10 @@ function InvoiceDetail() {
       // Clean up the URL
       URL.revokeObjectURL(url)
       
-      alert('Invoice downloaded as HTML file! You can open it and print to PDF.')
+      toast.success('Invoice downloaded as HTML file! You can open it and print to PDF.')
     } catch (error) {
       console.error('Error downloading invoice:', error)
-      alert('Failed to download invoice: ' + error.message)
+      toast.error('Failed to download invoice: ' + error.message)
     }
   }
 

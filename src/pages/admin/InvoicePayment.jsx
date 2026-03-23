@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { CreditCard, Smartphone, DollarSign, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import toast from 'react-hot-toast'
 
 function InvoicePayment() {
   const { id } = useParams()
@@ -77,7 +78,7 @@ function InvoicePayment() {
 
     } catch (error) {
       console.error('Error processing payment:', error)
-      alert('Payment failed. Please try again.')
+      toast.error('Payment failed. Please try again.')
     } finally {
       setProcessing(false)
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import toast from 'react-hot-toast'
 
 function DbTest() {
   const [status, setStatus] = useState('Checking...')
@@ -56,15 +57,15 @@ function DbTest() {
 
       if (error) {
         console.error('Insert error:', error)
-        alert(`Insert failed: ${error.message}`)
+        toast.error(`Insert failed: ${error.message}`)
       } else {
         console.log('Insert success:', data)
-        alert('Test entry created successfully!')
+        toast.success('Test entry created successfully!')
         checkDatabase() // Refresh the list
       }
     } catch (error) {
       console.error('Insert error:', error)
-      alert(`Insert failed: ${error.message}`)
+      toast.error(`Insert failed: ${error.message}`)
     }
   }
 
