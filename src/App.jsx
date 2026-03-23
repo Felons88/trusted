@@ -45,6 +45,7 @@ import QuoteArchive from './pages/admin/QuoteArchive'
 import ClientDetail from './pages/admin/ClientDetail'
 import InvoiceDetail from './pages/admin/InvoiceDetail'
 import Invoices from './pages/admin/Invoices'
+import NewInvoice from './pages/admin/NewInvoice'
 import InvoicePayment from './pages/admin/InvoicePayment'
 import Payments from './pages/admin/Payments'
 import Messages from './pages/admin/Messages'
@@ -127,6 +128,7 @@ function App() {
             <Route path="quote-request/new" element={<QuoteRequest />} />
             <Route path="quote-archive" element={<QuoteArchive />} />
             <Route path="invoices" element={<Invoices />} />
+            <Route path="invoices/new" element={<NewInvoice />} />
             <Route path="invoices/:id" element={<InvoiceDetail />} />
             <Route path="payments" element={<Payments />} />
             <Route path="messages" element={<Messages />} />
