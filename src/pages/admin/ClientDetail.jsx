@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { 
   ArrowLeft, User, Mail, Phone, MapPin, Calendar, DollarSign, Car, Edit, Trash2, 
-  Clock, Star, MessageSquare, FileText, TrendingUp, Award, AlertCircle, Eye 
+  Clock, Star, MessageSquare, FileText, TrendingUp, Award, AlertCircle, Eye, Map
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -38,25 +38,89 @@ function ClientDetail() {
       if (clientError) throw clientError
       setClient(clientData)
 
-      // Load client's vehicles
-      const { data: vehiclesData } = await supabase
-        .from('vehicles')
-        .select('*')
-        .eq('client_id', id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
+      // Load client's vehicles - also check for vehicles linked to duplicate client records
+      let vehiclesData = []
+      try {
+        // First try by current client_id
+        const { data: currentVehicles } = await supabase
+          .from('vehicles')
+          .select('*')
+          .eq('client_id', id)
+          .eq('is_active', true)
 
-      setVehicles(vehiclesData || [])
+        vehiclesData = currentVehicles || []
 
-      // Load client's bookings
-      const { data: bookingsData } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('client_id', id)
-        .order('created_at', { ascending: false })
-        .limit(10)
+        // If client has email or user_id, also check for vehicles linked to duplicates
+        if (clientData?.email || clientData?.user_id) {
+          const { data: allClients } = await supabase
+            .from('clients')
+            .select('id')
+            .or(`email.eq.${clientData.email},user_id.eq.${clientData.user_id}`)
 
-      setBookings(bookingsData || [])
+          if (allClients && allClients.length > 1) {
+            const duplicateIds = allClients.map(c => c.id).filter(cid => cid !== id)
+            if (duplicateIds.length > 0) {
+              const { data: duplicateVehicles } = await supabase
+                .from('vehicles')
+                .select('*')
+                .in('client_id', duplicateIds)
+                .eq('is_active', true)
+
+              if (duplicateVehicles) {
+                vehiclesData = [...vehiclesData, ...duplicateVehicles]
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.log('Error loading vehicles:', error.message)
+      }
+
+      setVehicles(vehiclesData)
+
+      // Load client's bookings - also check for bookings linked to duplicate client records
+      let bookingsData = []
+      try {
+        // First try by current client_id
+        const { data: currentBookings } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('client_id', id)
+          .order('created_at', { ascending: false })
+          .limit(10)
+
+        bookingsData = currentBookings || []
+
+        // If client has email or user_id, also check for bookings linked to duplicates
+        if (clientData?.email || clientData?.user_id) {
+          const { data: allClients } = await supabase
+            .from('clients')
+            .select('id')
+            .or(`email.eq.${clientData.email},user_id.eq.${clientData.user_id}`)
+
+          if (allClients && allClients.length > 1) {
+            const duplicateIds = allClients.map(c => c.id).filter(cid => cid !== id)
+            if (duplicateIds.length > 0) {
+              const { data: duplicateBookings } = await supabase
+                .from('bookings')
+                .select('*')
+                .in('client_id', duplicateIds)
+                .order('created_at', { ascending: false })
+                .limit(10)
+
+              if (duplicateBookings) {
+                bookingsData = [...bookingsData, ...duplicateBookings]
+                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+                  .slice(0, 10)
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.log('Error loading bookings:', error.message)
+      }
+
+      setBookings(bookingsData)
 
       // Load loyalty points (with error handling)
       let loyaltyData = null
@@ -76,16 +140,45 @@ function ClientDetail() {
 
       setLoyaltyPoints(loyaltyData)
 
-      // Load outstanding invoices
+      // Load outstanding invoices - also check for invoices linked to duplicate client records
+      let invoicesData = []
       try {
-        const { data: invoicesData } = await supabase
+        // First try by current client_id
+        const { data: currentInvoices } = await supabase
           .from('invoices')
           .select('*')
           .eq('client_id', id)
           .in('status', ['sent', 'pending'])
           .order('created_at', { ascending: false })
 
-        setOutstandingInvoices(invoicesData || [])
+        invoicesData = currentInvoices || []
+
+        // If client has email or user_id, also check for invoices linked to duplicates
+        if (clientData?.email || clientData?.user_id) {
+          const { data: allClients } = await supabase
+            .from('clients')
+            .select('id')
+            .or(`email.eq.${clientData.email},user_id.eq.${clientData.user_id}`)
+
+          if (allClients && allClients.length > 1) {
+            const duplicateIds = allClients.map(c => c.id).filter(cid => cid !== id)
+            if (duplicateIds.length > 0) {
+              const { data: duplicateInvoices } = await supabase
+                .from('invoices')
+                .select('*')
+                .in('client_id', duplicateIds)
+                .in('status', ['sent', 'pending'])
+                .order('created_at', { ascending: false })
+
+              if (duplicateInvoices) {
+                invoicesData = [...invoicesData, ...duplicateInvoices]
+                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+              }
+            }
+          }
+        }
+
+        setOutstandingInvoices(invoicesData)
       } catch (error) {
         console.log('Error loading invoices:', error.message)
         setOutstandingInvoices([])
@@ -132,6 +225,33 @@ function ClientDetail() {
       pending: 'bg-yellow-500/20 text-yellow-400'
     }
     return colors[status] || 'bg-gray-500/20 text-gray-400'
+  }
+
+  const openMaps = () => {
+    if (!client?.address) {
+      toast.error('No address available for this client')
+      return
+    }
+
+    const fullAddress = `${client.address}, ${client.city || ''}, ${client.state || ''} ${client.zip_code || ''}`.trim()
+    
+    // Detect device type
+    const userAgent = navigator.userAgent.toLowerCase()
+    const isApple = /iphone|ipad|ipod/.test(userAgent) || /mac/.test(userAgent)
+    const isSamsung = /samsung/.test(userAgent)
+    
+    let mapsUrl = ''
+    
+    if (isApple) {
+      // Use Apple Maps
+      mapsUrl = `maps://maps.apple.com/?address=${encodeURIComponent(fullAddress)}`
+    } else {
+      // Use Google Maps (default for Samsung and others)
+      mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(fullAddress)}`
+    }
+    
+    // Open in new tab
+    window.open(mapsUrl, '_blank')
   }
 
   const getBookingStatusColor = (status) => {
@@ -253,13 +373,18 @@ function ClientDetail() {
           )}
           
           {client.address && (
-            <div className="flex items-center space-x-3">
-              <MapPin className="text-electric-blue" size={20} />
-              <div>
+            <button
+              onClick={openMaps}
+              className="flex items-center space-x-3 hover:bg-white/5 p-2 rounded-lg transition-colors group"
+            >
+              <MapPin className="text-electric-blue group-hover:text-bright-cyan" size={20} />
+              <div className="text-left">
                 <div className="text-sm text-light-gray">Address</div>
-                <div className="text-light-gray">{client.address}</div>
+                <div className="text-light-gray group-hover:text-bright-cyan">
+                  {client.address}
+                </div>
               </div>
-            </div>
+            </button>
           )}
           
           <div className="flex items-center space-x-3">
@@ -368,17 +493,34 @@ function ClientDetail() {
       {/* Simple Service Location */}
       {client.address && (
         <div className="glass-card p-6">
-          <h3 className="text-xl font-bold text-light-gray mb-4 flex items-center">
-            <MapPin className="text-electric-blue mr-3" size={24} />
-            Service Location
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xl font-bold text-light-gray flex items-center">
+              <MapPin className="text-electric-blue mr-3" size={24} />
+              Service Location
+            </h3>
+            <button
+              onClick={openMaps}
+              className="btn-secondary flex items-center space-x-2"
+            >
+              <Map size={16} />
+              <span>Maps</span>
+            </button>
+          </div>
           <div className="bg-navy-light/30 rounded-lg p-4 border border-electric-blue/20">
-            <div className="flex items-center space-x-3">
-              <MapPin className="text-electric-blue" size={20} />
-              <div>
-                <p className="text-light-gray font-medium">{client.address}</p>
-                <p className="text-sm text-light-gray">Service area for this client</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <MapPin className="text-electric-blue" size={20} />
+                <div>
+                  <p className="text-light-gray font-medium">{client.address}</p>
+                  <p className="text-sm text-light-gray">Service area for this client</p>
+                </div>
               </div>
+              <button
+                onClick={openMaps}
+                className="text-electric-blue hover:text-bright-cyan transition-colors p-2 hover:bg-white/5 rounded-lg"
+              >
+                <Map size={18} />
+              </button>
             </div>
           </div>
         </div>

@@ -33,12 +33,12 @@ function AddVehicle() {
 
   const loadClientData = async () => {
     try {
-      const { data: client } = await supabase
+      const { data: clients } = await supabase
         .from('clients')
         .select('*')
         .eq('user_id', user.id)
-        .single()
 
+      const client = clients && clients.length > 0 ? clients[0] : null
       setClientData(client)
     } catch (error) {
       console.error('Error loading client data:', error)
@@ -75,8 +75,10 @@ function AddVehicle() {
           model: formData.model,
           color: formData.color,
           license_plate: formData.license_plate,
-          vehicle_size: formData.vehicle_size,
+          vin: formData.vin || null,
+          size: formData.vehicle_size, // Use 'size' not 'vehicle_size'
           notes: formData.notes,
+          is_active: true
         })
 
       if (error) throw error

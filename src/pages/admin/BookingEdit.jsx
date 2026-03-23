@@ -95,8 +95,21 @@ function BookingEdit() {
       if (bookingError) throw bookingError
 
       // Load clients
-      const { data: clientsData } = await supabase.from('clients').select('*')
-      setClients(clientsData || [])
+      const { data: clientsData } = await supabase.from('clients').select('*').order('created_at', { ascending: true })
+      
+      // Deduplicate clients by user_id and email, keeping the earliest created record
+      const uniqueClients = []
+      const seen = new Set()
+      
+      for (const client of clientsData || []) {
+        const key = client.user_id || client.email
+        if (!seen.has(key)) {
+          seen.add(key)
+          uniqueClients.push(client)
+        }
+      }
+      
+      setClients(uniqueClients)
 
       // Load vehicles
       const { data: vehiclesData } = await supabase.from('vehicles').select('*').eq('is_active', true)

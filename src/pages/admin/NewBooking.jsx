@@ -83,9 +83,22 @@ function NewBooking() {
     try {
       // Load clients
       try {
-        const { data: clientsData, error: clientsError } = await supabase.from('clients').select('*')
+        const { data: clientsData, error: clientsError } = await supabase.from('clients').select('*').order('created_at', { ascending: true })
         if (clientsError) throw clientsError
-        setClients(clientsData || [])
+        
+        // Deduplicate clients by user_id and email, keeping the earliest created record
+        const uniqueClients = []
+        const seen = new Set()
+        
+        for (const client of clientsData || []) {
+          const key = client.user_id || client.email
+          if (!seen.has(key)) {
+            seen.add(key)
+            uniqueClients.push(client)
+          }
+        }
+        
+        setClients(uniqueClients)
       } catch (err) {
         console.error('Client loading error:', err)
         setClients([])
@@ -267,9 +280,6 @@ function NewBooking() {
     setLoading(true)
     
     try {
-      // Generate booking number
-      const bookingNumber = `BK-${Date.now()}`
-      
       const { data, error } = await supabase
         .from('bookings')
         .insert({
@@ -278,19 +288,17 @@ function NewBooking() {
           service_id: services.find(s => s.name === formData.service_type)?.id,
           service_type: formData.service_type,
           vehicle_size: selectedVehicle?.vehicle_size || 'sedan',
+          preferred_date: formData.booking_date,
+          preferred_time: formData.booking_time,
           service_address: selectedClient?.address || 'TBD',
           service_city: parsedAddress.city,
           service_state: parsedAddress.state,
           service_zip: parsedAddress.zip,
           subtotal: formData.total_cost,
-          booking_number: bookingNumber,
-          preferred_date: formData.booking_date,
-          preferred_time: formData.booking_time,
-          total_cost: formData.total_cost,
-          status: formData.status,
+          tax: formData.total_cost * 0.08,
+          total: formData.total_cost * 1.08,
           notes: formData.notes,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          status: formData.status || 'pending'
         })
         .select()
         .single()

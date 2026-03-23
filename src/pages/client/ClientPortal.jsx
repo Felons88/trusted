@@ -36,21 +36,22 @@ function ClientPortal() {
         .from('clients')
         .select('*')
         .eq('user_id', user.id)
-        .single()
 
-      if (clientError && clientError.code !== 'PGRST116') {
+      if (clientError) {
         console.error('Client query error:', clientError)
       }
 
-      if (clientData) {
-        console.log('Found existing client:', clientData)
-        setClient(clientData)
+      const existingClient = clientData && clientData.length > 0 ? clientData[0] : null
+
+      if (existingClient) {
+        console.log('Found existing client:', existingClient)
+        setClient(existingClient)
 
         // Load bookings for existing client
         const { data: bookingsData } = await supabase
           .from('bookings')
           .select('*')
-          .eq('client_id', clientData.id)
+          .eq('client_id', existingClient.id)
           .order('created_at', { ascending: false })
           .limit(5)
 
@@ -58,7 +59,7 @@ function ClientPortal() {
         const { data: vehiclesData } = await supabase
           .from('vehicles')
           .select('*')
-          .eq('client_id', clientData.id)
+          .eq('client_id', existingClient.id)
           .eq('is_active', true)
 
         setBookings(bookingsData || [])

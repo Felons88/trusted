@@ -32,11 +32,12 @@ function ClientBookingDetail() {
       setLoading(true)
 
       // Get client data
-      const { data: clientData } = await supabase
+      const { data: clients } = await supabase
         .from('clients')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+
+      const clientData = clients && clients.length > 0 ? clients[0] : null
 
       if (!clientData) {
         toast.error('Client data not found')

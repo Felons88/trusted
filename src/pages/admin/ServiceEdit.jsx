@@ -13,11 +13,10 @@ function ServiceEdit() {
     name: '',
     description: '',
     type: 'exterior',
-    base_price: 50,
-    base_price_sedan: 0,
-    base_price_suv: 0,
-    base_price_truck: 0,
-    base_price_van: 0,
+    base_price_sedan: 50,
+    base_price_suv: 60,
+    base_price_truck: 70,
+    base_price_van: 80,
     duration_minutes: 120,
     is_active: true
   })
@@ -40,11 +39,10 @@ function ServiceEdit() {
         name: data.name || '',
         description: data.description || '',
         type: data.type || 'exterior',
-        base_price: data.base_price || 50,
-        base_price_sedan: data.base_price_sedan || 0,
-        base_price_suv: data.base_price_suv || 0,
-        base_price_truck: data.base_price_truck || 0,
-        base_price_van: data.base_price_van || 0,
+        base_price_sedan: data.base_price_sedan || 50,
+        base_price_suv: data.base_price_suv || 60,
+        base_price_truck: data.base_price_truck || 70,
+        base_price_van: data.base_price_van || 80,
         duration_minutes: data.duration_minutes || 120,
         is_active: data.is_active ?? true
       })
@@ -73,7 +71,6 @@ function ServiceEdit() {
           name: formData.name,
           description: formData.description,
           type: formData.type,
-          base_price: formData.base_price,
           base_price_sedan: formData.base_price_sedan,
           base_price_suv: formData.base_price_suv,
           base_price_truck: formData.base_price_truck,
@@ -161,61 +158,11 @@ function ServiceEdit() {
                   className="admin-select"
                   required
                 >
-                  {serviceTypes.slice(0, 3).map(type => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
+                  <option value="exterior">Exterior</option>
+                  <option value="interior">Interior</option>
+                  <option value="full">Full Detail</option>
+                  <option value="add-on">Add-on</option>
                 </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-light-gray mb-2">Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  className="admin-input"
-                  rows={4}
-                  placeholder="Describe what this service includes..."
-                  required
-                />
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="is_active"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                  className="w-4 h-4 text-electric-blue rounded focus:ring-2 focus:ring-electric-blue/50"
-                />
-                <label htmlFor="is_active" className="text-light-gray">
-                  Service is active and available for booking
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Pricing */}
-          <div className="glass-card p-6">
-            <h3 className="text-xl font-bold text-light-gray mb-4 flex items-center">
-              <DollarSign className="text-electric-blue mr-3" size={24} />
-              Pricing
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-light-gray mb-2">Base Price</label>
-                <input
-                  type="number"
-                  value={formData.base_price}
-                  onChange={(e) => setFormData(prev => ({ ...prev, base_price: parseFloat(e.target.value) || 0 }))}
-                  className="admin-input"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  required
-                />
               </div>
 
               <div>
@@ -226,28 +173,80 @@ function ServiceEdit() {
                   onChange={(e) => setFormData(prev => ({ ...prev, duration_minutes: parseInt(e.target.value) || 120 }))}
                   className="admin-input"
                   min="30"
-                  max="480"
                   step="30"
                   required
                 />
               </div>
 
-              <div className="space-y-3">
-                <h4 className="text-sm font-semibold text-light-gray">Vehicle Size Pricing</h4>
-                {serviceTypes.slice(3).map(size => (
-                  <div key={size.vehicleSize} className="flex items-center space-x-3">
-                    <label className="text-sm text-light-gray w-16">{size.label}:</label>
+              <div>
+                <label className="block text-sm text-light-gray mb-3">Pricing by Vehicle Size</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs text-slate-400 mb-1 block">Sedan</label>
                     <input
                       type="number"
-                      value={formData[`base_price_${size.vehicleSize}`]}
-                      onChange={(e) => setFormData(prev => ({ ...prev, [`base_price_${size.vehicleSize}`]: parseFloat(e.target.value) || 0 }))}
-                      className="w-24 admin-input"
+                      value={formData.base_price_sedan}
+                      onChange={(e) => setFormData(prev => ({ ...prev, base_price_sedan: parseFloat(e.target.value) || 0 }))}
+                      className="admin-input"
                       min="0"
                       step="0.01"
                       placeholder="0.00"
+                      required
                     />
                   </div>
-                ))}
+                  <div>
+                    <label className="text-xs text-slate-400 mb-1 block">SUV</label>
+                    <input
+                      type="number"
+                      value={formData.base_price_suv}
+                      onChange={(e) => setFormData(prev => ({ ...prev, base_price_suv: parseFloat(e.target.value) || 0 }))}
+                      className="admin-input"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 mb-1 block">Truck</label>
+                    <input
+                      type="number"
+                      value={formData.base_price_truck}
+                      onChange={(e) => setFormData(prev => ({ ...prev, base_price_truck: parseFloat(e.target.value) || 0 }))}
+                      className="admin-input"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-400 mb-1 block">Van</label>
+                    <input
+                      type="number"
+                      value={formData.base_price_van}
+                      onChange={(e) => setFormData(prev => ({ ...prev, base_price_van: parseFloat(e.target.value) || 0 }))}
+                      className="admin-input"
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="is_active"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
+                  className="w-4 h-4 text-electric-blue bg-white/10 border-white/20 rounded focus:ring-electric-blue focus:ring-2"
+                />
+                <label htmlFor="is_active" className="text-sm text-light-gray">
+                  Service is active and available for booking
+                </label>
               </div>
             </div>
           </div>

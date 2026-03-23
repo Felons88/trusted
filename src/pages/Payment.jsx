@@ -104,6 +104,147 @@ function PaymentContent() {
     }
   }
 
+  const getClientIP = async () => {
+    try {
+      const response = await fetch('https://api.ipify.org?format=json')
+      const data = await response.json()
+      return data.ip
+    } catch (error) {
+      console.error('Error getting IP address:', error)
+      return null
+    }
+  }
+
+  const getLocation = async () => {
+    try {
+      const response = await fetch('https://ipapi.co/json/')
+      const data = await response.json()
+      return {
+        country: data.country_name,
+        country_code: data.country_code,
+        region: data.region,
+        city: data.city,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        postal: data.postal,
+        timezone: data.timezone
+      }
+    } catch (error) {
+      console.error('Error getting location:', error)
+      return {
+        country: null,
+        country_code: null,
+        region: null,
+        city: null,
+        latitude: null,
+        longitude: null,
+        postal: null,
+        timezone: null
+      }
+    }
+  }
+
+  const getDeviceFingerprint = () => {
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    const text = `${navigator.userAgent}${screen.width}${screen.height}${navigator.language}${navigator.platform}${new Date().getTimezoneOffset()}`
+    
+    ctx.textBaseline = 'top'
+    ctx.font = '14px Arial'
+    ctx.fillText(text, 2, 2)
+    
+    return canvas.toDataURL()
+  }
+
+  const updatePaymentAttemptStatus = async (paymentAttemptId, status, reason = null) => {
+    try {
+      await supabase.rpc('update_payment_status', [
+        paymentAttemptId,
+        status,
+        reason
+      ])
+    } catch (error) {
+      console.error('Error updating payment status:', error)
+    }
+  }
+
+  const recordPaymentDetails = async (paymentAttemptId, details) => {
+    try {
+      await supabase.rpc('record_payment_details', [
+        paymentAttemptId,
+        details.stripe_payment_intent_id,
+        details.stripe_payment_method_id,
+        details.stripe_charge_id,
+        details.stripe_customer_id,
+        details.amount,
+        details.currency,
+        details.outcome,
+        details.network_status,
+        details.reason,
+        details.risk_level,
+        details.risk_score,
+        details.fraud_signals,
+        details.stripe_produced,
+        details.application_fee_amount,
+        details.application_fee_currency,
+        details.transfer_amount,
+        details.transfer_currency
+      ])
+    } catch (error) {
+      console.error('Error recording payment details:', error)
+    }
+  }
+
+  const performFraudDetection = async (paymentAttemptId, confirmedIntent) => {
+    try {
+      // Extract fraud signals from Stripe response
+      const fraudSignals = []
+      
+      // Check for suspicious patterns
+      if (confirmedIntent.charges?.data?.[0]?.outcome?.risk_level === 'elevated') {
+        fraudSignals.push({
+          type: 'elevated_risk_level',
+          description: 'Stripe marked as elevated risk'
+        })
+      }
+      
+      if (confirmedIntent.charges?.data?.[0]?.outcome?.seller_message) {
+        fraudSignals.push({
+          type: 'seller_message',
+          description: confirmedIntent.charges?.data?.[0]?.outcome?.seller_message
+        })
+      }
+      
+      // Calculate risk score
+      const riskScore = confirmedIntent.charges?.data?.[0]?.outcome?.risk_level === 'elevated' ? 50 : 0
+      
+      // Determine risk level
+      let riskLevel = 'normal'
+      if (riskScore >= 50) riskLevel = 'elevated'
+      if (riskScore >= 80) riskLevel = 'high'
+      
+      // Record fraud detection
+      await supabase.rpc('record_fraud_detection', [
+        paymentAttemptId,
+        riskScore,
+        riskLevel,
+        JSON.stringify(fraudSignals),
+        JSON.stringify([
+          { rule: 'stripe_risk_level', triggered: riskLevel !== 'normal' }
+        ]),
+        JSON.stringify({
+          model: 'stripe_ml',
+          confidence: 0.85
+        }),
+        false,
+        null,
+        null
+      ])
+    } catch (error) {
+      console.error('Error performing fraud detection:', error)
+    }
+  }
+
   const sendPaymentReceipt = async (invoiceData, paymentIntent, fees) => {
     try {
       // Get last 4 digits of card
@@ -472,43 +613,152 @@ function PaymentContent() {
 
       console.log('Payment method created:', paymentMethod.id)
 
-      // Step 2: Create payment intent with fees
-      const { error: piError, paymentIntent } = await stripe.confirmPayment({
-        elements: elements.getElement(CardElement),
-        amount: Math.round(fees.finalAmount * 100), // Convert to cents
-        currency: 'usd',
-        return_url: `${window.location.origin}/success`,
-        cancel_url: `${window.location.origin}/payment/${id}?cancelled=true`,
-        metadata: {
-          invoice_id: invoice.id,
-          invoice_number: invoice.invoice_number,
-          base_amount: baseAmount.toString(),
-          stripe_fees: fees.stripeFee.toString(),
-          platform_fees: fees.platformFee.toString(),
-          total_fees: fees.totalFees.toString(),
+      // Step 2: Create payment intent on backend to get client secret
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-payment-intent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
         },
+        body: JSON.stringify({
+          amount: Math.round(fees.finalAmount * 100), // Convert to cents
+          currency: 'usd',
+          metadata: {
+            invoice_id: invoice.id,
+            invoice_number: invoice.invoice_number,
+            base_amount: baseAmount.toString(),
+            stripe_fees: fees.stripeFee.toString(),
+            platform_fees: fees.platformFee.toString(),
+            total_fees: fees.totalFees.toString(),
+          },
+        })
       })
 
-      if (piError) {
-        console.error('Payment intent creation error:', piError)
-        setError(piError.message)
+      if (!response.ok) {
+        const errorData = await response.text()
+        console.error('Payment intent creation failed:', errorData)
+        setError('Failed to create payment intent')
         setProcessing(false)
         return
       }
 
-      console.log('Payment intent created:', paymentIntent)
+      const paymentIntentData = await response.json()
 
-      // Step 3: The payment intent is already confirmed by confirmPayment
-      const { error: confirmError, paymentIntent: confirmedIntent } = paymentIntent
+      if (!paymentIntentData.success) {
+        console.error('Payment intent creation error:', paymentIntentData.error)
+        setError(paymentIntentData.error || 'Failed to create payment intent')
+        setProcessing(false)
+        return
+      }
 
-      if (confirmError) {
-        console.error('Payment confirmation error:', confirmError)
-        setError(confirmError.message)
+      console.log('Payment intent created:', paymentIntentData)
+
+      // Step 3: Record payment attempt in database
+      const clientIP = await getClientIP()
+      const userAgent = navigator.userAgent
+      const location = await getLocation()
+      const deviceFingerprint = getDeviceFingerprint()
+
+      // Record payment attempt
+      const paymentAttemptId = await supabase.rpc('record_payment_attempt', [
+        invoice.id,
+        invoice.clients?.id,
+        paymentIntentData.payment_intent_id,
+        'pending',
+        fees.finalAmount,
+        'usd',
+        clientIP,
+        userAgent,
+        location,
+        deviceFingerprint,
+        'card',
+        null, // Will be filled after payment confirmation
+        null,
+        null,
+        null,
+        null,
+        JSON.stringify(paymentIntentData)
+      ])
+
+      // Step 4: Confirm payment with client secret
+      const { error: confirmPaymentError, paymentIntent: confirmedIntent } = await stripe.confirmCardPayment(
+        paymentIntentData.client_secret,
+        {
+          payment_method: {
+            card: elements.getElement(CardElement),
+            billing_details: {
+              name: invoice?.clients?.full_name,
+              email: invoice?.clients?.email,
+            },
+          },
+          return_url: `${window.location.origin}/success`,
+        }
+      )
+
+      if (confirmPaymentError) {
+        console.error('Payment confirmation error:', confirmPaymentError)
+        
+        // Update payment attempt status to failed
+        await updatePaymentAttemptStatus(paymentAttemptId, 'failed', confirmPaymentError.message)
+        
+        // Record payment details (failed)
+        await recordPaymentDetails(paymentAttemptId, {
+          stripe_payment_intent_id: paymentIntentData.payment_intent_id,
+          stripe_payment_method_id: null,
+          stripe_charge_id: null,
+          stripe_customer_id: null,
+          amount: fees.finalAmount,
+          currency: 'usd',
+          outcome: 'failed',
+          network_status: null,
+          reason: confirmPaymentError.message,
+          risk_level: 'normal',
+          risk_score: 0,
+          fraud_signals: [],
+          stripe_produced: JSON.stringify(paymentIntentData)
+        })
+
+        setError(confirmPaymentError.message)
         setProcessing(false)
         return
       }
 
       console.log('Payment confirmed:', confirmedIntent)
+
+      // Extract card details from payment method
+      const cardDetails = confirmedIntent.charges?.data?.[0]?.payment_method?.card || {}
+      const cardLast4 = cardDetails.last4 || null
+      const cardBrand = cardDetails.brand || null
+      const cardCountry = cardDetails.country || null
+      const cardExpMonth = cardDetails.exp_month?.toString() || null
+      const cardExpYear = cardDetails.exp_year?.toString() || null
+
+      // Update payment attempt status to succeeded
+      await updatePaymentAttemptStatus(paymentAttemptId, 'succeeded', 'Payment completed successfully')
+
+      // Record payment details (successful)
+      await recordPaymentDetails(paymentAttemptId, {
+        stripe_payment_intent_id: paymentIntentData.payment_intent_id,
+        stripe_payment_method_id: confirmedIntent.payment_method?.id || null,
+        stripe_charge_id: confirmedIntent.charges?.data?.[0]?.id || null,
+        stripe_customer_id: confirmedIntent.customer || null,
+        amount: fees.finalAmount,
+        currency: 'usd',
+        application_fee_amount: fees.stripeFee,
+        application_fee_currency: 'usd',
+        transfer_amount: fees.platformFee,
+        transfer_currency: 'usd',
+        outcome: 'succeeded',
+        network_status: confirmedIntent.charges?.data?.[0]?.outcome?.network_status || null,
+        reason: null,
+        risk_level: 'normal',
+        risk_score: confirmedIntent.charges?.data?.[0]?.outcome?.risk_level === 'normal' ? 0 : 50,
+        fraud_signals: [],
+        stripe_produced: JSON.stringify(confirmedIntent)
+      })
+
+      // Perform fraud detection
+      await performFraudDetection(paymentAttemptId, confirmedIntent)
 
       // Update invoice status to paid
       const { error: updateError } = await supabase
@@ -567,10 +817,10 @@ function PaymentContent() {
             <h1 className="text-2xl font-bold text-white mb-4">Error</h1>
             <p className="text-slate-300 mb-6">{error}</p>
             <button
-              onClick={() => navigate('/invoices')}
+              onClick={() => window.location.reload()}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
             >
-              Back to Invoices
+              Try Again
             </button>
           </div>
         </div>

@@ -49,16 +49,29 @@ function NewInvoice() {
       console.log('Fetching clients...')
       const { data, error } = await supabase
         .from('clients')
-        .select('id, full_name, email, phone, address')
-        .order('full_name')
+        .select('id, full_name, email, phone, address, user_id, created_at')
+        .order('created_at', { ascending: true }) // Get earliest records first
 
       if (error) {
         console.error('Client fetch error:', error)
         throw error
       }
       
-      console.log('Clients fetched:', data?.length || 0, 'clients')
-      setClients(data || [])
+      // Deduplicate clients by user_id (keep the earliest created one)
+      const uniqueClients = data ? data.reduce((acc, client) => {
+        const existingIndex = acc.findIndex(c => 
+          (c.user_id && client.user_id && c.user_id === client.user_id) ||
+          (c.email && client.email && c.email.toLowerCase() === client.email.toLowerCase())
+        )
+        
+        if (existingIndex === -1) {
+          acc.push(client)
+        }
+        return acc
+      }, []) : []
+      
+      console.log('Clients fetched:', data?.length || 0, 'total, dedupled to:', uniqueClients.length, 'unique clients')
+      setClients(uniqueClients)
     } catch (error) {
       console.error('Error fetching clients:', error)
       setClients([]) // Ensure clients is set to empty array on error
@@ -108,11 +121,8 @@ function NewInvoice() {
   }
 
   const generateInvoiceNumber = () => {
-    const date = new Date()
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const random = Math.floor(Math.random() * 1000)
-    setInvoiceNumber(`INV-${year}${month}-${random}`)
+    // Let the database handle invoice number generation via trigger
+    setInvoiceNumber('AUTO-GENERATED')
   }
 
   const addService = (serviceId) => {
@@ -235,7 +245,6 @@ function NewInvoice() {
     try {
       console.log('Creating invoice with data:', {
         client_id: selectedClient,
-        invoice_number: invoiceNumber,
         invoice_date: new Date().toISOString(), // Full ISO date format
         due_date: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         status: 'pending', // Changed from 'draft' to 'pending'
@@ -248,7 +257,6 @@ function NewInvoice() {
         .from('invoices')
         .insert({
           client_id: selectedClient,
-          invoice_number: invoiceNumber,
           invoice_date: new Date().toISOString(), // Full ISO date format
           due_date: dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           status: 'pending', // Changed from 'draft' to 'pending'
@@ -431,9 +439,9 @@ function NewInvoice() {
                   <input
                     type="text"
                     value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                    className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-400 text-sm"
-                    placeholder="INV-2024-001"
+                    readOnly
+                    className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-blue-400 text-sm opacity-75"
+                    placeholder="Auto-generated"
                   />
                 </div>
 

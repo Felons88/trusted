@@ -87,7 +87,7 @@ const Settings = () => {
         .rpc('get_review_statistics');
 
       if (error) {
-        console.error('Review stats RPC error:', error);
+        console.log('Review stats RPC function not found, using default values');
         setReviewStats({
           total_reviews: 0,
           average_rating: 4.5,
@@ -97,8 +97,14 @@ const Settings = () => {
         });
         return;
       }
-      
-      setReviewStats(data[0]);
+
+      setReviewStats(data || {
+        total_reviews: 0,
+        average_rating: 4.5,
+        rating_distribution: {},
+        total_responses: 0,
+        last_sync_at: null
+      });
     } catch (error) {
       console.error('Error fetching review stats:', error);
       setReviewStats({
@@ -216,17 +222,17 @@ const Settings = () => {
   const handleUpdateReview = async (reviewId, updates) => {
     try {
       const { error } = await supabase
-        .from('google_reviews')
-        .update(updates)
-        .eq('id', reviewId);
+        .from('app_settings')
+        .update({ config: updates })
+        .eq('id', 1);
 
       if (error) throw error;
       
-      await fetchReviews();
-      setMessage({ type: 'success', text: 'Review updated successfully!' });
+      await fetchSettings();
+      setMessage({ type: 'success', text: 'Settings updated successfully!' });
     } catch (error) {
-      console.error('Error updating review:', error);
-      setMessage({ type: 'error', text: 'Error updating review' });
+      console.error('Error updating settings:', error);
+      setMessage({ type: 'error', text: 'Error updating settings' });
     }
   };
 

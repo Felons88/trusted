@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { ArrowLeft, Save, Package, DollarSign, Clock, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Save, Package, DollarSign, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 function NewService() {
@@ -11,39 +11,19 @@ function NewService() {
     name: '',
     description: '',
     type: 'exterior',
-    duration_hours: 2,
-    duration_minutes: 0,
+    duration_minutes: 120,
     base_price_sedan: '',
     base_price_suv: '',
     base_price_truck: '',
     base_price_van: '',
-    is_active: true,
-    features: []
+    is_active: true
   })
-  const [newFeature, setNewFeature] = useState('')
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
-    }))
-  }
-
-  const handleAddFeature = () => {
-    if (newFeature.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        features: [...prev.features, newFeature.trim()]
-      }))
-      setNewFeature('')
-    }
-  }
-
-  const handleRemoveFeature = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      features: prev.features.filter((_, i) => i !== index)
     }))
   }
 
@@ -73,7 +53,6 @@ function NewService() {
         base_price_suv: formData.base_price_suv ? parseFloat(formData.base_price_suv) : null,
         base_price_truck: formData.base_price_truck ? parseFloat(formData.base_price_truck) : null,
         base_price_van: formData.base_price_van ? parseFloat(formData.base_price_van) : null,
-        duration_hours: parseInt(formData.duration_hours),
         duration_minutes: parseInt(formData.duration_minutes)
       }
 
@@ -175,36 +154,21 @@ function NewService() {
               Duration
             </h2>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-metallic-silver mb-2 font-semibold">
-                  Hours
-                </label>
-                <input
-                  type="number"
-                  name="duration_hours"
-                  value={formData.duration_hours}
-                  onChange={handleInputChange}
-                  min="0"
-                  max="8"
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-metallic-silver mb-2 font-semibold">
-                  Minutes
-                </label>
-                <input
-                  type="number"
-                  name="duration_minutes"
-                  value={formData.duration_minutes}
-                  onChange={handleInputChange}
-                  min="0"
-                  max="59"
-                  step="15"
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
-                />
-              </div>
+            <div>
+              <label className="block text-metallic-silver mb-2 font-semibold">
+                Duration (minutes)
+              </label>
+              <input
+                type="number"
+                name="duration_minutes"
+                value={formData.duration_minutes}
+                onChange={handleInputChange}
+                min="30"
+                max="480"
+                step="30"
+                placeholder="120"
+                className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+              />
             </div>
           </div>
 
@@ -277,52 +241,6 @@ function NewService() {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Features */}
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-metallic-silver flex items-center">
-              <CheckCircle className="mr-2" size={24} />
-              Features
-            </h2>
-            
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newFeature}
-                onChange={(e) => setNewFeature(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddFeature())}
-                placeholder="Add a feature (e.g., Hand wash, Wax, Interior vacuum)"
-                className="flex-1 bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
-              />
-              <button
-                type="button"
-                onClick={handleAddFeature}
-                className="btn-primary"
-              >
-                Add
-              </button>
-            </div>
-
-            {formData.features.length > 0 && (
-              <div className="space-y-2">
-                {formData.features.map((feature, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-navy-dark/50 border border-electric-blue/20 rounded-lg px-4 py-2"
-                  >
-                    <span className="text-metallic-silver">{feature}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFeature(index)}
-                      className="text-red-400 hover:text-red-300 transition-colors"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Status */}

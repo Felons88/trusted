@@ -116,12 +116,13 @@ function createInvoiceHTML(invoice: any) {
         body { 
           font-family: Arial, sans-serif; 
           margin: 0; 
-          padding: 20px; 
+          padding: 15px; 
           background: #f5f5f5; 
           color: #333;
+          font-size: 12px;
         }
         .container { 
-          max-width: 600px; 
+          max-width: 800px; 
           margin: 0 auto; 
           background: white; 
           border-radius: 8px; 
@@ -129,49 +130,55 @@ function createInvoiceHTML(invoice: any) {
         }
         .header { 
           text-align: center; 
-          padding: 20px; 
+          padding: 15px; 
           border-bottom: 2px solid #1DB7E8; 
           background: #f8f9fa;
         }
         .header h1 { 
           color: #0B1C2D; 
           margin: 0 0 5px 0; 
-          font-size: 24px;
+          font-size: 20px;
+        }
+        .company-info {
+          font-size: 11px;
+          color: #666;
+          margin-top: 5px;
         }
         .info { 
           display: grid; 
           grid-template-columns: 1fr 1fr; 
           gap: 15px; 
-          margin: 20px;
+          margin: 15px;
         }
         .info-box { 
           background: #f8f9fa; 
-          padding: 15px; 
+          padding: 12px; 
           border-radius: 5px;
-          font-size: 14px;
+          font-size: 12px;
         }
         .table { 
           width: 100%; 
           border-collapse: collapse; 
-          margin: 20px 0;
-          font-size: 14px;
+          margin: 15px 0;
+          font-size: 12px;
         }
         .table th { 
           background: #0B1C2D; 
           color: white; 
-          padding: 10px; 
+          padding: 8px; 
           text-align: left; 
           font-weight: 600;
+          font-size: 11px;
         }
         .table td { 
-          padding: 10px; 
+          padding: 8px; 
           border-bottom: 1px solid #e9ecef; 
         }
         .text-right { text-align: right; }
         .pay-section { 
           text-align: center; 
-          margin: 20px; 
-          padding: 20px; 
+          margin: 15px; 
+          padding: 15px; 
           background: linear-gradient(135deg, #1DB7E8, #0FA9CE);
           border-radius: 5px;
         }
@@ -180,18 +187,26 @@ function createInvoiceHTML(invoice: any) {
           background: #28a745; 
           color: white; 
           text-decoration: none; 
-          padding: 12px 30px; 
+          padding: 10px 25px; 
           border-radius: 25px; 
           font-weight: 600; 
-          margin-bottom: 10px;
+          margin-bottom: 8px;
+          font-size: 14px;
         }
         .footer { 
           text-align: center; 
-          margin-top: 20px; 
-          padding-top: 15px; 
+          margin-top: 15px; 
+          padding-top: 12px; 
           border-top: 1px solid #e9ecef; 
-          font-size: 12px; 
+          font-size: 10px; 
           color: #666;
+        }
+        .total-row {
+          font-weight: bold;
+          background: #f8f9fa;
+        }
+        .total-row td {
+          padding: 10px 8px;
         }
       </style>
     </head>
@@ -199,6 +214,9 @@ function createInvoiceHTML(invoice: any) {
       <div class="container">
         <div class="header">
           <h1>Trusted Mobile Detailing</h1>
+          <div class="company-info">
+            Professional Auto Detailing Services | Elk River, MN
+          </div>
           <p><strong>Invoice #${invoice.invoice_number || invoice.id}</strong></p>
         </div>
         
@@ -206,11 +224,13 @@ function createInvoiceHTML(invoice: any) {
           <div class="info-box">
             <strong>Bill To:</strong><br>
             ${invoice.clients?.full_name || 'Client'}<br>
-            ${invoice.clients?.email || ''}
+            ${invoice.clients?.email || ''}<br>
+            ${invoice.clients?.address || ''}
           </div>
           <div class="info-box">
-            <strong>Details:</strong><br>
+            <strong>Invoice Details:</strong><br>
             Date: ${new Date(invoice.created_at).toLocaleDateString()}<br>
+            Due: ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'Due on receipt'}<br>
             Status: ${invoice.status?.toUpperCase() || 'DRAFT'}
           </div>
         </div>
@@ -218,10 +238,10 @@ function createInvoiceHTML(invoice: any) {
         <table class="table">
           <thead>
             <tr>
-              <th>Service</th>
-              <th class="text-right">Qty</th>
-              <th class="text-right">Price</th>
-              <th class="text-right">Total</th>
+              <th style="width: 50%">Service Description</th>
+              <th style="width: 15%" class="text-right">Qty</th>
+              <th style="width: 15%" class="text-right">Price</th>
+              <th style="width: 20%" class="text-right">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -235,29 +255,29 @@ function createInvoiceHTML(invoice: any) {
             `).join('')}
           </tbody>
           <tfoot>
-            <tr>
-              <td colspan="3" class="text-right"><strong>Total:</strong></td>
+            <tr class="total-row">
+              <td colspan="3" class="text-right"><strong>Total Amount:</strong></td>
               <td class="text-right"><strong>$${total.toFixed(2)}</strong></td>
             </tr>
           </tfoot>
         </table>
 
         <div class="pay-section">
-          <div style="color: white; font-size: 18px; margin-bottom: 10px;">
-            <strong>Total: $${total.toFixed(2)}</strong>
+          <div style="color: white; font-size: 16px; margin-bottom: 8px;">
+            <strong>Total Due: $${total.toFixed(2)}</strong>
           </div>
           <a href="https://trustedmobiledetailing.com/payment/${invoice.id}" class="pay-button">
-            💳 Pay Now
+            💳 Pay Invoice Online
           </a>
-          <div style="color: white; font-size: 11px;">
-            Secure payment processing
+          <div style="color: white; font-size: 10px;">
+            Secure payment processing via Stripe
           </div>
         </div>
 
         <div class="footer">
           <p><strong>Thank you for your business!</strong></p>
           <p>📞 (612) 525-3137 | 📧 info@trustedmobiledetailing.com</p>
-          <p>329 Morton Ave, Elk River, MN 55330</p>
+          <p>329 Morton Ave, Elk River, MN 55330 | Licensed & Insured</p>
         </div>
       </div>
     </body>

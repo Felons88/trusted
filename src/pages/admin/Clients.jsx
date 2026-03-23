@@ -34,8 +34,21 @@ function Clients() {
           .order('created_at', { ascending: false })
 
         if (error) throw error
-        clients = data || []
-        console.log('Clients: Loaded', clients.length, 'clients')
+        
+        // Deduplicate clients by user_id and email, keeping the earliest created record
+        const uniqueClients = []
+        const seen = new Set()
+        
+        for (const client of data || []) {
+          const key = client.user_id || client.email
+          if (!seen.has(key)) {
+            seen.add(key)
+            uniqueClients.push(client)
+          }
+        }
+        
+        clients = uniqueClients
+        console.log('Clients: Loaded', clients.length, 'unique clients (from', (data || []).length, 'total records)')
       } catch (err) {
         console.log('Clients: Error loading data, using empty array')
         clients = []
@@ -77,8 +90,7 @@ function Clients() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold metallic-heading mb-2">Clients</h1>
-          <p className="text-light-gray">Manage customer information</p>
+          {/* Page title removed - already shown in header */}
         </div>
         <Link to="/admin/clients/new" className="btn-primary">
           <Plus size={20} className="inline mr-2" />

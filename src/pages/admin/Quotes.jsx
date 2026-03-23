@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
-import { FileText, Mail, Phone, CheckCircle, Clock, DollarSign } from 'lucide-react'
+import { FileText, Mail, Phone, CheckCircle, Clock, DollarSign, Map } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 function Quotes() {
@@ -53,6 +53,30 @@ function Quotes() {
       console.error('Error marking quote as read:', error)
       toast.error('Failed to update quote')
     }
+  }
+
+  const openMaps = (address) => {
+    if (!address) {
+      toast.error('No address available')
+      return
+    }
+
+    // Detect device type
+    const userAgent = navigator.userAgent.toLowerCase()
+    const isApple = /iphone|ipad|ipod/.test(userAgent) || /mac/.test(userAgent)
+    
+    let mapsUrl = ''
+    
+    if (isApple) {
+      // Use Apple Maps
+      mapsUrl = `maps://maps.apple.com/?address=${encodeURIComponent(address)}`
+    } else {
+      // Use Google Maps (default for Samsung and others)
+      mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(address)}`
+    }
+    
+    // Open in new tab
+    window.open(mapsUrl, '_blank')
   }
 
   if (loading) {
@@ -147,8 +171,22 @@ function Quotes() {
 
                 {quote.address && (
                   <div className="mb-4">
-                    <h4 className="font-semibold text-metallic-silver mb-2">Service Address</h4>
-                    <p className="text-light-gray text-sm">{quote.address}</p>
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-metallic-silver mb-2">Service Address</h4>
+                      <button
+                        onClick={() => openMaps(quote.address)}
+                        className="text-electric-blue hover:text-bright-cyan transition-colors flex items-center space-x-1 text-sm"
+                      >
+                        <Map size={14} />
+                        <span>View in Maps</span>
+                      </button>
+                    </div>
+                    <button
+                      onClick={() => openMaps(quote.address)}
+                      className="text-light-gray text-sm hover:text-bright-cyan transition-colors text-left"
+                    >
+                      {quote.address}
+                    </button>
                   </div>
                 )}
 

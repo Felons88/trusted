@@ -5,7 +5,7 @@ import { format } from 'date-fns'
 import { 
   ArrowLeft, Edit, Trash2, Calendar, Clock, User, Car, DollarSign, 
   MapPin, Phone, Mail, CheckCircle, XCircle, AlertCircle, MoreVertical,
-  FileText, Download, Send, Activity, Settings, UserPlus
+  FileText, Download, Send, Activity, Settings, UserPlus, Map
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -125,6 +125,40 @@ function BookingDetail() {
     } catch (error) {
       return 'unknown'
     }
+  }
+
+  const openMaps = () => {
+    // Use service address from booking first, then fallback to client address
+    const serviceAddress = booking?.service_address || booking?.clients?.address
+    
+    if (!serviceAddress) {
+      toast.error('No address available for this booking')
+      return
+    }
+
+    // Build full address with city, state, zip if available
+    const city = booking?.service_city || ''
+    const state = booking?.service_state || ''
+    const zip = booking?.service_zip || ''
+    
+    const fullAddress = `${serviceAddress}, ${city}, ${state} ${zip}`.trim().replace(/,\s*,/g, ',').replace(/,\s*$/, '')
+    
+    // Detect device type
+    const userAgent = navigator.userAgent.toLowerCase()
+    const isApple = /iphone|ipad|ipod/.test(userAgent) || /mac/.test(userAgent)
+    
+    let mapsUrl = ''
+    
+    if (isApple) {
+      // Use Apple Maps
+      mapsUrl = `maps://maps.apple.com/?address=${encodeURIComponent(fullAddress)}`
+    } else {
+      // Use Google Maps (default for Samsung and others)
+      mapsUrl = `https://maps.google.com/?q=${encodeURIComponent(fullAddress)}`
+    }
+    
+    // Open in new tab
+    window.open(mapsUrl, '_blank')
   }
 
   const handleStatusChange = async (newStatus) => {
@@ -376,9 +410,24 @@ function BookingDetail() {
                     </div>
                   )}
                   {booking.clients?.address && (
-                    <div className="flex items-center text-light-gray">
-                      <MapPin className="mr-2" size={16} />
-                      {booking.clients.address}
+                    <button
+                      onClick={openMaps}
+                      className="flex items-center text-light-gray hover:text-bright-cyan transition-colors group"
+                    >
+                      <MapPin className="mr-2 group-hover:text-bright-cyan" size={16} />
+                      <span className="group-hover:underline">
+                        {booking.clients.address}
+                      </span>
+                    </button>
+                  )}
+                  
+                  {/* Show service address if different from client address */}
+                  {booking?.service_address && booking.service_address !== booking.clients?.address && (
+                    <div className="flex items-center text-light-gray text-sm">
+                      <MapPin className="mr-2 text-electric-blue" size={14} />
+                      <span className="text-electric-blue">
+                        Service: {booking.service_address}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -416,6 +465,13 @@ function BookingDetail() {
           <div className="glass-card p-6">
             <h3 className="text-lg font-semibold text-light-gray mb-4">Quick Actions</h3>
             <div className="space-y-3">
+              <button 
+                onClick={openMaps}
+                className="w-full btn-secondary flex items-center justify-center space-x-2"
+              >
+                <Map size={16} />
+                <span>Open in Maps</span>
+              </button>
               <button className="w-full btn-secondary flex items-center justify-center space-x-2">
                 <Send size={16} />
                 <span>Send Confirmation</span>

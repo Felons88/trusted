@@ -43,6 +43,7 @@ import QuoteRequests from './pages/admin/QuoteRequests'
 import QuoteRequest from './pages/admin/QuoteRequest'
 import QuoteArchive from './pages/admin/QuoteArchive'
 import ClientDetail from './pages/admin/ClientDetail'
+import ClientEdit from './pages/admin/ClientEdit'
 import InvoiceDetail from './pages/admin/InvoiceDetail'
 import Invoices from './pages/admin/Invoices'
 import NewInvoice from './pages/admin/NewInvoice'
@@ -123,6 +124,7 @@ function App() {
             <Route path="clients" element={<Clients />} />
             <Route path="clients/new" element={<NewClient />} />
             <Route path="clients/:id" element={<ClientDetail />} />
+            <Route path="clients/:id/edit" element={<ClientEdit />} />
             <Route path="vehicles" element={<Vehicles />} />
             <Route path="vehicles/new" element={<NewVehicle />} />
             <Route path="vehicles/:id" element={<AdminVehicleDetail />} />

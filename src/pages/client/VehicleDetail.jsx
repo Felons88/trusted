@@ -21,11 +21,12 @@ function VehicleDetail() {
 
   const loadVehicleData = async () => {
     try {
-      const { data: client } = await supabase
+      const { data: clients } = await supabase
         .from('clients')
         .select('id')
         .eq('user_id', user.id)
-        .single()
+
+      const client = clients && clients.length > 0 ? clients[0] : null
 
       if (client) {
         const { data: vehicleData } = await supabase

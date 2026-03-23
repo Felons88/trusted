@@ -20,17 +20,21 @@ function Vehicles() {
 
   const loadVehicles = async () => {
     try {
-      const { data: client } = await supabase
+      const { data: clients } = await supabase
         .from('clients')
         .select('id')
         .eq('user_id', user.id)
-        .single()
+        .order('created_at', { ascending: true })
 
-      if (client) {
+      if (clients && clients.length > 0) {
+        // Get all client IDs for this user (handle duplicates)
+        const clientIds = clients.map(c => c.id)
+        
+        // Load vehicles from all client records
         const { data: vehiclesData } = await supabase
           .from('vehicles')
           .select('*')
-          .eq('client_id', client.id)
+          .in('client_id', clientIds)
           .eq('is_active', true)
           .order('created_at', { ascending: false })
 
