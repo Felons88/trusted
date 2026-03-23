@@ -22,44 +22,40 @@ serve(async (req) => {
       )
     }
 
-    // Create Supabase client with service role key for server-side operations
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+    const brevoApiKey = Deno.env.get('BREVO_API_KEY')
 
-    // Fetch invoice details
-    const { data: invoice, error: invoiceError } = await supabaseClient
+    if (!supabaseUrl || !supabaseServiceKey || !brevoApiKey) {
+      return new Response(
+        JSON.stringify({ error: 'Server configuration missing' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Create client with anon key for public access
+    const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+    const { data: invoice, error } = await supabase
       .from('invoices')
-      .select(`
-        *,
-        clients:client_id(full_name, email, address),
-        invoice_items(*)
-      `)
+      .select('*, clients:client_id(full_name, email, address), invoice_items(*)')
       .eq('id', invoiceId)
       .single()
 
-    if (invoiceError || !invoice) {
+    if (error || !invoice) {
       return new Response(
         JSON.stringify({ error: 'Invoice not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Generate invoice HTML
-    const invoiceHTML = generateInvoiceHTML(invoice)
+    const invoiceHTML = createInvoiceHTML(invoice)
 
-    // Send email using Brevo SMTP API
-    const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
+    const emailResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
-        'api-key': Deno.env.get('BREVO_API_KEY'),
+        'api-key': brevoApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -67,27 +63,23 @@ serve(async (req) => {
           name: 'Trusted Mobile Detailing',
           email: 'invoices@trustedmobiledetailing.com'
         },
-        to: [{
-          email: clientEmail,
-          name: clientName
-        }],
-        subject: `Invoice #${invoice.invoice_number || invoice.id} from Trusted Mobile Detailing`,
+        to: [{ email: clientEmail, name: clientName }],
+        subject: `Invoice #${invoice.invoice_number || invoice.id}`,
         htmlContent: invoiceHTML,
       }),
     })
 
-    if (!brevoResponse.ok) {
-      const error = await brevoResponse.text()
-      throw new Error(`Failed to send email: ${error}`)
+    if (!emailResponse.ok) {
+      const errorData = await emailResponse.text()
+      throw new Error(`Email failed: ${errorData}`)
     }
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Invoice sent successfully' }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error) {
-    console.error('Error sending invoice email:', error)
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -95,55 +87,44 @@ serve(async (req) => {
   }
 })
 
-function generateInvoiceHTML(invoice: any) {
+function createInvoiceHTML(invoice: any) {
   const items = invoice.invoice_items || []
-  const subtotal = items.reduce((sum: number, item: any) => sum + (item.quantity * item.unit_price), 0)
-  const total = invoice.total || subtotal
+  const total = items.reduce((sum: number, item: any) => sum + (item.quantity * item.unit_price), 0)
 
   return `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
-      <title>Invoice #${invoice.invoice_number || invoice.id}</title>
+      <title>Invoice</title>
       <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; }
         .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: #1a1a1a; margin: 0; }
-        .header p { color: #666; margin: 5px 0; }
         .info { display: flex; justify-content: space-between; margin-bottom: 30px; }
-        .info-section { flex: 1; }
-        .info-section h3 { color: #1a1a1a; margin: 0 0 10px 0; }
-        .info-section p { margin: 5px 0; color: #333; }
-        .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .table th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #dee2e6; }
-        .table td { padding: 12px; border-bottom: 1px solid #dee2e6; }
-        .table .text-right { text-align: right; }
-        .total { text-align: right; font-size: 18px; font-weight: bold; color: #1a1a1a; }
-        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; text-align: center; color: #666; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { padding: 12px; border: 1px solid #ddd; text-align: left; }
+        .table th { background: #f5f5f5; }
+        .text-right { text-align: right; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
           <h1>Trusted Mobile Detailing</h1>
-          <p>Professional Car Detailing Services</p>
+          <p>Invoice #${invoice.invoice_number || invoice.id}</p>
         </div>
         
         <div class="info">
-          <div class="info-section">
-            <h3>Invoice To:</h3>
-            <p><strong>${invoice.clients?.full_name || 'Client'}</strong></p>
-            <p>${invoice.clients?.email || ''}</p>
-            ${invoice.clients?.address ? `<p>${invoice.clients.address}</p>` : ''}
+          <div>
+            <h3>Bill To:</h3>
+            <p>${invoice.clients?.full_name}</p>
+            <p>${invoice.clients?.email}</p>
           </div>
-          <div class="info-section">
-            <h3>Invoice Details:</h3>
-            <p><strong>Invoice #:</strong> ${invoice.invoice_number || invoice.id}</p>
-            <p><strong>Date:</strong> ${new Date(invoice.created_at).toLocaleDateString()}</p>
-            ${invoice.due_date ? `<p><strong>Due Date:</strong> ${new Date(invoice.due_date).toLocaleDateString()}</p>` : ''}
-            <p><strong>Status:</strong> ${invoice.status || 'draft'}</p>
+          <div>
+            <h3>Details:</h3>
+            <p>Date: ${new Date(invoice.created_at).toLocaleDateString()}</p>
+            <p>Status: ${invoice.status}</p>
           </div>
         </div>
 
@@ -151,8 +132,8 @@ function generateInvoiceHTML(invoice: any) {
           <thead>
             <tr>
               <th>Description</th>
-              <th class="text-right">Quantity</th>
-              <th class="text-right">Unit Price</th>
+              <th class="text-right">Qty</th>
+              <th class="text-right">Price</th>
               <th class="text-right">Total</th>
             </tr>
           </thead>
@@ -168,23 +149,11 @@ function generateInvoiceHTML(invoice: any) {
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="3" class="total">Total:</td>
-              <td class="total">$${total.toFixed(2)}</td>
+              <td colspan="3" class="text-right"><strong>Total:</strong></td>
+              <td class="text-right"><strong>$${total.toFixed(2)}</strong></td>
             </tr>
           </tfoot>
         </table>
-
-        ${invoice.notes ? `
-          <div class="notes">
-            <h3>Notes:</h3>
-            <p>${invoice.notes}</p>
-          </div>
-        ` : ''}
-
-        <div class="footer">
-          <p>Thank you for your business! For questions, please contact us.</p>
-          <p>Trusted Mobile Detailing - Professional Car Care Services</p>
-        </div>
       </div>
     </body>
     </html>

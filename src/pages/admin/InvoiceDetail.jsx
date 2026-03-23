@@ -50,8 +50,11 @@ function InvoiceDetail() {
     }
 
     try {
-      // Call the send invoice email edge function
+      // Call the send invoice email edge function with proper authorization
       const { data, error } = await supabase.functions.invoke('send-invoice-email', {
+        headers: {
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+        },
         body: {
           invoiceId: invoice.id,
           clientEmail: invoice.clients.email,
