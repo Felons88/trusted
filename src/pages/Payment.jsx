@@ -18,14 +18,14 @@ function PaymentContent() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
   
-  const { invoiceId } = useParams()
+  const { id } = useParams()
   const navigate = useNavigate()
   const stripe = useStripe()
   const elements = useElements()
 
   useEffect(() => {
-    console.log('Payment component loaded, invoiceId:', invoiceId)
-    if (invoiceId) {
+    console.log('Payment component loaded, invoiceId:', id)
+    if (id) {
       fetchInvoice()
       // Add timeout to prevent infinite loading
       const timeout = setTimeout(() => {
@@ -42,10 +42,10 @@ function PaymentContent() {
       setError('No invoice ID provided')
       setLoading(false)
     }
-  }, [invoiceId])
+  }, [id])
 
   const fetchInvoice = async () => {
-    console.log('Fetching invoice with ID:', invoiceId)
+    console.log('Fetching invoice with ID:', id)
     setLoading(true)
     
     try {
@@ -56,7 +56,7 @@ function PaymentContent() {
           clients:client_id(full_name, email, address),
           invoice_items(*)
         `)
-        .eq('id', invoiceId)
+        .eq('id', id)
         .single()
 
       console.log('Invoice fetch result:', { data, error })
@@ -205,7 +205,7 @@ function PaymentContent() {
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold text-white mb-4">Invoice Details</h2>
                 <div className="bg-navy-dark p-4 rounded-lg">
-                  <p><strong>Invoice #:</strong> {invoice?.invoice_number || invoiceId}</p>
+                  <p><strong>Invoice #:</strong> {invoice?.invoice_number || id}</p>
                   <p><strong>Date:</strong> {new Date(invoice?.created_at).toLocaleDateString()}</p>
                   <p><strong>Status:</strong> 
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${
