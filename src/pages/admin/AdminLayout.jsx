@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Calendar, Users, Car, Package,
   DollarSign, Mail, FileText, Settings, LogOut,
   Menu, X, MessageSquare, Star,
-  Plus
+  Plus, Shield, Activity, TrendingUp
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -49,89 +49,169 @@ function AdminLayout() {
   ]
 
   return (
-    <div className="min-h-screen bg-navy-gradient flex">
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+      {/* Header */}
+      <div className="bg-white/10 backdrop-blur-md border-b border-white/20">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-4">
+              {/* Mobile Menu Toggle */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden text-white hover:text-blue-400 transition-colors"
+              >
+                {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+              
+              {/* Logo */}
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <Shield className="text-white" size={16} />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white">Trusted Admin</h1>
+                  <p className="text-xs text-slate-400">Management Portal</p>
+                </div>
+              </div>
+            </div>
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed lg:sticky top-0 h-screen bg-navy-deep/95 backdrop-blur-md border-r border-electric-blue/20 transition-all duration-300 z-50 ${
-          sidebarOpen ? 'left-0 w-64' : '-left-full lg:left-0 w-64'
-        }`}
-      >
-        <div className="p-4 border-b border-electric-blue/20">
-          <div className="flex items-center justify-between">
-            <h2 className={`text-xl font-bold text-electric-blue transition-all duration-300 ${
-              sidebarOpen ? 'opacity-100' : 'lg:opacity-0'
-            }`}>
-              Admin Panel
-            </h2>
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="text-metallic-silver hover:text-electric-blue transition-colors flex-shrink-0"
-              aria-label="Toggle sidebar"
-            >
-              {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            {/* User Menu */}
+            <div className="flex items-center space-x-4">
+              <div className="hidden sm:flex items-center space-x-3">
+                <div className="text-right">
+                  <p className="text-sm font-medium text-white">{profile?.full_name || 'Admin'}</p>
+                  <p className="text-xs text-slate-400">{profile?.email}</p>
+                </div>
+                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">
+                    {profile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
+                  </span>
+                </div>
+              </div>
+              
+              <button
+                onClick={handleLogout}
+                className="text-white hover:text-red-400 transition-colors flex items-center space-x-2"
+              >
+                <LogOut size={20} />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex">
+        {/* Sidebar */}
+        <div className={`fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}>
+          <div className="w-64 bg-white/10 backdrop-blur-md border-r border-white/20 h-full">
+            {/* Sidebar Header */}
+            <div className="p-6 border-b border-white/20">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <Shield className="text-white" size={20} />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Admin Panel</h2>
+                  <p className="text-xs text-slate-400">Control Center</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="p-4">
+              <ul className="space-y-2">
+                {menuItems.map((item, index) => {
+                  const isActive = location.pathname === item.path
+                  return (
+                    <li key={index}>
+                      <Link
+                        to={item.path}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                          isActive
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                            : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                        }`}
+                      >
+                        <item.icon size={20} />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </nav>
+
+            {/* Sidebar Footer */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-white/20">
+              <div className="bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg p-4">
+                <div className="flex items-center space-x-2 mb-2">
+                  <Activity className="text-white" size={16} />
+                  <span className="text-white font-semibold">Quick Stats</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="text-white/80">
+                    <p className="text-blue-100">Status</p>
+                    <p className="text-white font-bold">Active</p>
+                  </div>
+                  <div className="text-white/80">
+                    <p className="text-blue-100">Role</p>
+                    <p className="text-white font-bold">Admin</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <nav className="p-4 space-y-2 overflow-y-auto flex-1">
-          {menuItems.map((item) => {
-            const isActive = location.pathname === item.path
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                  isActive
-                    ? 'bg-electric-blue/20 text-electric-blue border border-electric-blue/30'
-                    : 'text-light-gray hover:bg-electric-blue/10 hover:text-electric-blue'
-                }`}
-              >
-                <item.icon size={20} className="flex-shrink-0" />
-                <span className="font-medium">{item.label}</span>
-              </Link>
-            )
-          })}
-        </nav>
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-electric-blue/20">
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-3 px-4 py-3 rounded-lg text-light-gray hover:bg-red-500/10 hover:text-red-400 transition-all w-full"
-          >
-            <LogOut size={20} className="flex-shrink-0" />
-            <span className="font-medium">Logout</span>
-          </button>
-        </div>
-      </aside>
+        {/* Main Content */}
+        <div className="flex-1 lg:ml-0">
+          <div className="min-h-screen">
+            {/* Page Header */}
+            <div className="bg-white/5 backdrop-blur-md border-b border-white/20">
+              <div className="px-4 sm:px-6 lg:px-8 py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h1 className="text-2xl font-bold text-white capitalize">
+                      {menuItems.find(item => location.pathname === item.path)?.label || 'Dashboard'}
+                    </h1>
+                    <p className="text-slate-400 text-sm">
+                      {menuItems.find(item => location.pathname === item.path)?.path}
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 text-slate-400 text-sm">
+                      <TrendingUp size={16} />
+                      <span>Live</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-slate-400 text-sm">
+                      <Activity size={16} />
+                      <span>{new Date().toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-      {/* Main Content */}
-      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
-        {/* Mobile Header */}
-        <div className="lg:hidden mb-6 flex items-center justify-between">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-metallic-silver hover:text-electric-blue transition-colors p-2"
-            aria-label="Open sidebar"
-          >
-            <Menu size={24} />
-          </button>
-          <h1 className="text-xl font-bold text-electric-blue">Admin Panel</h1>
-          <div className="w-10"></div> {/* Spacer for centering */}
+            {/* Page Content */}
+            <main className="p-4 sm:p-6 lg:p-8">
+              <Outlet />
+            </main>
+          </div>
         </div>
-
-        <div className="max-w-7xl mx-auto">
-          <Outlet />
-        </div>
-      </main>
+      </div>
     </div>
   )
 }
