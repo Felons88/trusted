@@ -39,6 +39,8 @@ function AdminLayout() {
     { icon: Car, label: 'Vehicles', path: '/admin/vehicles' },
     { icon: Package, label: 'Services & Add-ons', path: '/admin/services' },
     { icon: DollarSign, label: 'Payments', path: '/admin/payments' },
+    { icon: FileText, label: 'Invoices', path: '/admin/invoices' },
+    { icon: Plus, label: 'New Invoice', path: '/admin/invoices/new' },
     { icon: FileText, label: 'Quote Requests', path: '/admin/quote-requests' },
     { icon: MessageSquare, label: 'Messages', path: '/admin/messages' },
     { icon: Star, label: 'Reviews', path: '/admin/reviews' },
