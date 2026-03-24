@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowLeft, FileText, Download, Edit, Mail, DollarSign, Calendar, User, CheckCircle, Clock } from 'lucide-react'
+import { ArrowLeft, FileText, Download, Edit, Mail, DollarSign, Calendar, User, CheckCircle, Clock, CreditCard, MapPin, ExternalLink } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
 
@@ -354,6 +354,106 @@ function InvoiceDetail() {
             </div>
           </div>
         </div>
+
+        {/* Stripe Payment Information - Only show if paid */}
+        {invoice.status === 'paid' && (invoice.stripe_payment_intent_id || invoice.stripe_charge_id) && (
+          <div className="mb-6">
+            <h3 className="text-lg font-semibold text-light-gray mb-3 flex items-center">
+              <CreditCard className="mr-2 text-electric-blue" size={20} />
+              Payment Information
+            </h3>
+            <div className="bg-navy-dark/30 border border-electric-blue/20 rounded-lg p-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  {invoice.stripe_payment_intent_id && (
+                    <div>
+                      <p className="text-xs text-light-gray mb-1">Payment Intent ID</p>
+                      <p className="text-sm font-mono text-electric-blue break-all">
+                        {invoice.stripe_payment_intent_id}
+                      </p>
+                      <a
+                        href={`https://dashboard.stripe.com/payments/${invoice.stripe_payment_intent_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center text-xs text-blue-400 hover:text-blue-300 mt-1"
+                      >
+                        <ExternalLink size={12} className="mr-1" />
+                        View in Stripe Dashboard
+                      </a>
+                    </div>
+                  )}
+                  
+                  {invoice.paid_at && (
+                    <div>
+                      <p className="text-xs text-light-gray mb-1">Payment Date</p>
+                      <p className="text-sm text-light-gray">
+                        {new Date(invoice.paid_at).toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="space-y-3">
+                  {invoice.total_charged && (
+                    <div>
+                      <p className="text-xs text-light-gray mb-1">Total Charged</p>
+                      <p className="text-sm text-green-400 font-semibold">
+                        ${parseFloat(invoice.total_charged).toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {invoice.stripe_fees && (
+                    <div>
+                      <p className="text-xs text-light-gray mb-1">Stripe Fees</p>
+                      <p className="text-sm text-light-gray">
+                        ${parseFloat(invoice.stripe_fees).toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {invoice.base_amount && (
+                    <div>
+                      <p className="text-xs text-light-gray mb-1">Base Amount</p>
+                      <p className="text-sm text-light-gray">
+                        ${parseFloat(invoice.base_amount).toFixed(2)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Payment Method Details */}
+              {invoice.payment_method_details && (
+                <div className="mt-4 pt-4 border-t border-navy-light">
+                  <p className="text-xs text-light-gray mb-2">Payment Method</p>
+                  <div className="text-sm text-light-gray">
+                    {typeof invoice.payment_method_details === 'string' 
+                      ? invoice.payment_method_details 
+                      : JSON.stringify(invoice.payment_method_details, null, 2)
+                    }
+                  </div>
+                </div>
+              )}
+              
+              {/* Billing Address */}
+              {invoice.billing_address && (
+                <div className="mt-4 pt-4 border-t border-navy-light">
+                  <p className="text-xs text-light-gray mb-2 flex items-center">
+                    <MapPin size={12} className="mr-1" />
+                    Billing Address
+                  </p>
+                  <div className="text-sm text-light-gray">
+                    {typeof invoice.billing_address === 'string' 
+                      ? invoice.billing_address 
+                      : JSON.stringify(invoice.billing_address, null, 2)
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Line Items */}
         <div className="mb-6">

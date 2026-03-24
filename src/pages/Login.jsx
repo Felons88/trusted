@@ -52,25 +52,23 @@ function Login() {
       
       toast.success('Welcome back! Nice to see you again!')
       
-      // Wait a bit for profile to load
-      setTimeout(() => {
-        console.log('Login: Checking profile for redirect', { 
-          email: profile?.email, 
-          role: profile?.role,
-          profile: profile 
-        })
-        
-        if (profile?.role === 'admin') {
-          console.log('Login: Redirecting to admin panel')
-          navigate('/admin')
-        } else if (profile?.role === 'client') {
-          console.log('Login: Redirecting to client portal')
-          navigate('/client-portal')
-        } else {
-          console.log('Login: No profile role found, staying on login page')
-          setError('Profile not loaded properly. Please try again.')
-        }
-      }, 500)
+      // Immediate redirect since profile is now loaded synchronously
+      console.log('Login: Checking profile for redirect', { 
+        email: profile?.email, 
+        role: profile?.role,
+        profile: profile 
+      })
+      
+      if (profile?.role === 'admin') {
+        console.log('Login: Redirecting to admin panel')
+        navigate('/admin')
+      } else if (profile?.role === 'client') {
+        console.log('Login: Redirecting to client portal')
+        navigate('/client-portal')
+      } else {
+        console.log('Login: No profile role found, staying on login page')
+        setError('Profile not loaded properly. Please try again.')
+      }
     } catch (err) {
       console.error('Login: Sign in failed', err)
       setError(err.message || 'The Email or Password that you entered is incorrect check your credentials.')
@@ -85,15 +83,14 @@ function Login() {
     if (pendingLogin) {
       toast.success('Welcome back! Nice to see you again!')
       
-      setTimeout(() => {
-        if (profile?.role === 'admin') {
-          navigate('/admin')
-        } else if (profile?.role === 'client') {
-          navigate('/client-portal')
-        } else {
-          navigate('/client-portal') // Default to client portal
-        }
-      }, 500)
+      // Immediate redirect for 2FA as well
+      if (profile?.role === 'admin') {
+        navigate('/admin')
+      } else if (profile?.role === 'client') {
+        navigate('/client-portal')
+      } else {
+        navigate('/client-portal') // Default to client portal
+      }
     }
   }
 

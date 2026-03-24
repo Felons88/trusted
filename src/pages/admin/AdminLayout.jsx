@@ -51,38 +51,41 @@ function AdminLayout() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Header */}
-      <div className="bg-white/10 backdrop-blur-md border-b border-white/20">
-        <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
+      <div className="bg-white/10 backdrop-blur-md border-b border-white/20 sticky top-0 z-30">
+        <div className="px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            <div className="flex items-center space-x-2 sm:space-x-4">
               {/* Mobile Menu Toggle */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden text-white hover:text-blue-400 transition-colors"
+                className="text-white hover:text-blue-400 transition-colors p-1"
               >
-                {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+                {sidebarOpen ? <X size={20} sm:size={24} /> : <Menu size={20} sm:size={24} />}
               </button>
               
               {/* Logo */}
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Shield className="text-white" size={16} />
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <Shield className="text-white" size={12} sm:size={16} />
                 </div>
-                <div>
-                  <h1 className="text-xl font-bold text-white">Trusted Detailing</h1>
+                <div className="hidden sm:block">
+                  <h1 className="text-lg sm:text-xl font-bold text-white">Trusted Detailing</h1>
                   <p className="text-xs text-slate-400">Management Portal</p>
+                </div>
+                <div className="sm:hidden">
+                  <h1 className="text-lg font-bold text-white">TD</h1>
                 </div>
               </div>
             </div>
 
             {/* User Menu */}
-            <div className="flex items-center space-x-4">
-              <div className="hidden sm:flex items-center space-x-3">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="hidden sm:flex items-center space-x-2 sm:space-x-3">
                 <div className="text-right">
-                  <p className="text-sm font-medium text-white">{profile?.full_name || 'Manager'}</p>
-                  <p className="text-xs text-slate-400">{profile?.email}</p>
+                  <p className="text-xs sm:text-sm font-medium text-white">{profile?.full_name || 'Manager'}</p>
+                  <p className="text-xs text-slate-400 hidden sm:block">{profile?.email}</p>
                 </div>
-                <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
                   <span className="text-white text-xs font-bold">
                     {profile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
                   </span>
@@ -91,10 +94,10 @@ function AdminLayout() {
               
               <button
                 onClick={handleLogout}
-                className="text-white hover:text-red-400 transition-colors flex items-center space-x-2"
+                className="text-white hover:text-red-400 transition-colors flex items-center space-x-1 sm:space-x-2 p-1"
               >
-                <LogOut size={20} />
-                <span className="hidden sm:inline">Logout</span>
+                <LogOut size={16} sm:size={20} />
+                <span className="hidden sm:inline text-xs sm:text-sm">Logout</span>
               </button>
             </div>
           </div>
@@ -106,10 +109,10 @@ function AdminLayout() {
         <div className={`fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
-          <div className="w-64 bg-white/10 backdrop-blur-md border-r border-white/20 h-full">
+          <div className="w-64 sm:w-72 lg:w-64 bg-white/10 backdrop-blur-md border-r border-white/20 h-full overflow-y-auto">
             {/* Navigation */}
-            <nav className="p-3">
-              <ul className="space-y-2">
+            <nav className="p-2 sm:p-3">
+              <ul className="space-y-1 sm:space-y-2">
                 {menuItems.map((item, index) => {
                   const isActive = location.pathname === item.path
                   return (
@@ -117,14 +120,14 @@ function AdminLayout() {
                       <Link
                         to={item.path}
                         onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                        className={`flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 rounded-lg transition-all duration-200 ${
                           isActive
                             ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
                             : 'text-slate-300 hover:bg-white/10 hover:text-white'
                         }`}
                       >
-                        <item.icon size={20} />
-                        <span className="font-medium">{item.label}</span>
+                        <item.icon size={16} sm:size={20} />
+                        <span className="font-medium text-sm sm:text-base">{item.label}</span>
                       </Link>
                     </li>
                   )
@@ -132,40 +135,40 @@ function AdminLayout() {
               </ul>
               
               {/* Quick Stats */}
-              <div className="mt-4 p-3 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-lg border border-white/10">
+              <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-lg border border-white/10">
                 <div className="flex items-center space-x-2 mb-2">
-                  <Activity className="text-blue-400" size={16} />
-                  <span className="text-white font-semibold text-sm">Quick Stats</span>
+                  <Activity className="text-blue-400" size={14} sm:size={16} />
+                  <span className="text-white font-semibold text-xs sm:text-sm">Quick Stats</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="text-white/80">
-                    <p className="text-blue-200">Status</p>
-                    <p className="text-white font-bold">Active</p>
+                    <p className="text-blue-200 text-xs">Status</p>
+                    <p className="text-white font-bold text-xs">Active</p>
                   </div>
                   <div className="text-white/80">
-                    <p className="text-blue-200">Role</p>
-                    <p className="text-white font-bold">Manager</p>
+                    <p className="text-blue-200 text-xs">Role</p>
+                    <p className="text-white font-bold text-xs">Manager</p>
                   </div>
                   <div className="text-white/80">
-                    <p className="text-blue-200">Live</p>
-                    <p className="text-white font-bold">Online</p>
+                    <p className="text-blue-200 text-xs">Live</p>
+                    <p className="text-white font-bold text-xs">Online</p>
                   </div>
                   <div className="text-white/80">
-                    <p className="text-blue-200">Date</p>
-                    <p className="text-white font-bold">{new Date().toLocaleDateString()}</p>
+                    <p className="text-blue-200 text-xs">Date</p>
+                    <p className="text-white font-bold text-xs">{new Date().toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>
             </nav>
 
             {/* User Account */}
-            <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-white/20">
+            <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 border-t border-white/20">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-4 py-3 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                className="w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
               >
-                <LogOut size={20} />
-                <span>Logout</span>
+                <LogOut size={16} sm:size={20} />
+                <span className="text-sm sm:text-base">Logout</span>
               </button>
             </div>
           </div>
@@ -180,14 +183,14 @@ function AdminLayout() {
         )}
 
         {/* Main Content */}
-        <div className="flex-1 lg:ml-0">
+        <div className="flex-1 lg:ml-0 min-w-0">
           <div className="min-h-screen">
             {/* Page Header */}
             <div className="bg-white/5 backdrop-blur-md border-b border-white/20">
-              <div className="px-3 sm:px-4 lg:px-6 py-3">
+              <div className="px-3 sm:px-4 lg:px-6 py-2 sm:py-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-2xl font-bold text-white capitalize">
+                    <h1 className="text-lg sm:text-2xl font-bold text-white capitalize">
                       {menuItems.find(item => location.pathname === item.path)?.label || 'Dashboard'}
                     </h1>
                   </div>

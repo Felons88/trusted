@@ -152,35 +152,33 @@ export const useAuthStore = create((set, get) => ({
     
     if (error) throw error
     
-    // EMERGENCY: Immediately create/set profile after successful sign in
+    // Immediately create/set profile after successful sign in using RPC function
     if (data.user) {
-      console.log('EMERGENCY: Sign in successful, loading profile from database for:', data.user.email)
+      console.log('EMERGENCY: Sign in successful, loading profile using RPC for:', data.user.email)
       
-      // Load profile from Supabase database
+      // Use the new get_profile RPC function that handles missing profiles
       try {
         const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single()
+          .rpc('get_profile', { user_id: data.user.id })
         
         if (profileError) {
-          console.error('Error loading profile:', profileError)
+          console.error('Error loading profile via RPC:', profileError)
         }
         
-        if (profile) {
-          console.log('EMERGENCY: Loaded profile from database:', profile)
-          set({ user: data.user, profile })
+        if (profile && profile.length > 0) {
+          const profileData = profile[0]
+          console.log('EMERGENCY: Loaded profile via RPC:', profileData)
+          set({ user: data.user, profile: profileData, loading: false })
         } else {
           // Create default client profile if none exists
-          console.log('EMERGENCY: No profile found, creating default client profile')
+          console.log('EMERGENCY: No profile found via RPC, creating default client profile')
           const defaultProfile = {
             id: data.user.id,
             email: data.user.email,
             full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
             role: 'client'
           }
-          set({ user: data.user, profile: defaultProfile })
+          set({ user: data.user, profile: defaultProfile, loading: false })
         }
       } catch (profileErr) {
         console.log('EMERGENCY: Profile loading failed after sign in, using default client profile')
@@ -190,7 +188,7 @@ export const useAuthStore = create((set, get) => ({
           full_name: 'Client User',
           role: 'client'
         }
-        set({ user: data.user, profile: fallbackProfile })
+        set({ user: data.user, profile: fallbackProfile, loading: false })
       }
     }
     

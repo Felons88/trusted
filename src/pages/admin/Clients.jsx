@@ -87,10 +87,11 @@ function Clients() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          {/* Page title removed - already shown in header */}
+          <h1 className="text-2xl sm:text-4xl font-bold metallic-heading mb-2">Clients</h1>
+          <p className="text-light-gray text-sm sm:text-base">Manage customer information</p>
         </div>
         <Link to="/admin/clients/new" className="btn-primary">
           <Plus size={20} className="inline mr-2" />
@@ -99,48 +100,50 @@ function Clients() {
       </div>
 
       <div className="glass-card">
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-light-gray" size={20} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-light-gray" size={20} />
             <input
               type="text"
-              placeholder="Search by name, email, or phone..."
+              placeholder="Search clients..."
+              className="w-full pl-10 pr-4 py-2 rounded-lg bg-navy-dark border border-electric-blue/20 focus:outline-none focus:border-electric-blue text-metallic-silver"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="admin-input pl-10"
             />
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
           {filteredClients.map((client) => (
-            <div key={client.id} className="bg-navy-dark/50 border border-electric-blue/20 rounded-lg p-6 hover:border-electric-blue transition-all">
+            <div key={client.id} className="bg-navy-dark/50 border border-electric-blue/20 rounded-lg p-4 sm:p-6 hover:border-electric-blue transition-all">
               <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-xl font-bold metallic-heading">{client.full_name}</h3>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg sm:text-xl font-bold metallic-heading truncate">{client.full_name}</h3>
                   <p className="text-sm text-light-gray">
                     {client.total_bookings || 0} bookings
                   </p>
                 </div>
                 <Link
                   to={`/admin/clients/${client.id}`}
-                  className="text-electric-blue hover:text-bright-cyan transition-colors"
+                  className="text-electric-blue hover:text-bright-cyan transition-colors flex-shrink-0 ml-2"
                 >
                   <Eye size={20} />
                 </Link>
               </div>
-
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center text-light-gray text-sm">
-                  <Mail size={16} className="mr-2 text-electric-blue" />
-                  {client.email}
-                </div>
-                <div className="flex items-center text-light-gray text-sm">
-                  <Phone size={16} className="mr-2 text-electric-blue" />
-                  {client.phone}
-                </div>
+              <div className="space-y-2 text-sm text-light-gray">
+                {client.email && (
+                  <div className="flex items-center space-x-2">
+                    <Mail size={16} className="flex-shrink-0" />
+                    <span className="truncate">{client.email}</span>
+                  </div>
+                )}
+                {client.phone && (
+                  <div className="flex items-center space-x-2">
+                    <Phone size={16} className="flex-shrink-0" />
+                    <span className="truncate">{client.phone}</span>
+                  </div>
+                )}
               </div>
-
               <div className="pt-4 border-t border-electric-blue/20">
                 <div className="flex justify-between items-center">
                   <span className="text-light-gray text-sm">Total Spent</span>
