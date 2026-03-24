@@ -13,10 +13,10 @@ function ServiceEdit() {
     name: '',
     description: '',
     type: 'exterior',
-    base_price_sedan: 50,
-    base_price_suv: 60,
-    base_price_truck: 70,
-    base_price_van: 80,
+    base_price_sedan: '',
+    base_price_suv: '',
+    base_price_truck: '',
+    base_price_van: '',
     duration_minutes: 120,
     is_active: true
   })
@@ -39,10 +39,10 @@ function ServiceEdit() {
         name: data.name || '',
         description: data.description || '',
         type: data.type || 'exterior',
-        base_price_sedan: data.base_price_sedan || 50,
-        base_price_suv: data.base_price_suv || 60,
-        base_price_truck: data.base_price_truck || 70,
-        base_price_van: data.base_price_van || 80,
+        base_price_sedan: data.base_price_sedan ?? '',
+        base_price_suv: data.base_price_suv ?? '',
+        base_price_truck: data.base_price_truck ?? '',
+        base_price_van: data.base_price_van ?? '',
         duration_minutes: data.duration_minutes || 120,
         is_active: data.is_active ?? true
       })
@@ -51,6 +51,20 @@ function ServiceEdit() {
       toast.error('Failed to load service data')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handlePriceChange = (field, value) => {
+    if (value === '' || value === null || value === undefined) {
+      // Allow empty values (user is clearing the field)
+      setFormData(prev => ({ ...prev, [field]: '' }))
+    } else {
+      // Convert to number, but don't default to 0 if invalid
+      const numValue = parseFloat(value)
+      if (!isNaN(numValue) && numValue >= 0) {
+        setFormData(prev => ({ ...prev, [field]: numValue }))
+      }
+      // If invalid, don't update (keep current value)
     }
   }
 
@@ -71,10 +85,10 @@ function ServiceEdit() {
           name: formData.name,
           description: formData.description,
           type: formData.type,
-          base_price_sedan: formData.base_price_sedan,
-          base_price_suv: formData.base_price_suv,
-          base_price_truck: formData.base_price_truck,
-          base_price_van: formData.base_price_van,
+          base_price_sedan: formData.base_price_sedan === '' ? 0 : formData.base_price_sedan,
+          base_price_suv: formData.base_price_suv === '' ? 0 : formData.base_price_suv,
+          base_price_truck: formData.base_price_truck === '' ? 0 : formData.base_price_truck,
+          base_price_van: formData.base_price_van === '' ? 0 : formData.base_price_van,
           duration_minutes: formData.duration_minutes,
           is_active: formData.is_active,
           updated_at: new Date().toISOString()
@@ -186,7 +200,7 @@ function ServiceEdit() {
                     <input
                       type="number"
                       value={formData.base_price_sedan}
-                      onChange={(e) => setFormData(prev => ({ ...prev, base_price_sedan: parseFloat(e.target.value) || 0 }))}
+                      onChange={(e) => handlePriceChange('base_price_sedan', e.target.value)}
                       className="admin-input"
                       min="0"
                       step="0.01"
@@ -199,7 +213,7 @@ function ServiceEdit() {
                     <input
                       type="number"
                       value={formData.base_price_suv}
-                      onChange={(e) => setFormData(prev => ({ ...prev, base_price_suv: parseFloat(e.target.value) || 0 }))}
+                      onChange={(e) => handlePriceChange('base_price_suv', e.target.value)}
                       className="admin-input"
                       min="0"
                       step="0.01"
@@ -212,7 +226,7 @@ function ServiceEdit() {
                     <input
                       type="number"
                       value={formData.base_price_truck}
-                      onChange={(e) => setFormData(prev => ({ ...prev, base_price_truck: parseFloat(e.target.value) || 0 }))}
+                      onChange={(e) => handlePriceChange('base_price_truck', e.target.value)}
                       className="admin-input"
                       min="0"
                       step="0.01"
@@ -225,7 +239,7 @@ function ServiceEdit() {
                     <input
                       type="number"
                       value={formData.base_price_van}
-                      onChange={(e) => setFormData(prev => ({ ...prev, base_price_van: parseFloat(e.target.value) || 0 }))}
+                      onChange={(e) => handlePriceChange('base_price_van', e.target.value)}
                       className="admin-input"
                       min="0"
                       step="0.01"

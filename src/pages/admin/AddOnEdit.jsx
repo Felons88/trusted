@@ -13,13 +13,27 @@ function AddOnEdit() {
     name: '',
     description: '',
     category: 'extra',
-    price: 0,
+    price: '',
     is_active: true
   })
 
   useEffect(() => {
     loadAddOn()
   }, [id])
+
+  const handlePriceChange = (value) => {
+    if (value === '' || value === null || value === undefined) {
+      // Allow empty values (user is clearing the field)
+      setFormData(prev => ({ ...prev, price: '' }))
+    } else {
+      // Convert to number, but don't default to 0 if invalid
+      const numValue = parseFloat(value)
+      if (!isNaN(numValue) && numValue >= 0) {
+        setFormData(prev => ({ ...prev, price: numValue }))
+      }
+      // If invalid, don't update (keep current value)
+    }
+  }
 
   const loadAddOn = async () => {
     try {
@@ -35,7 +49,7 @@ function AddOnEdit() {
         name: data.name || '',
         description: data.description || '',
         category: data.category || 'extra',
-        price: data.price || 0,
+        price: data.price ?? '',
         is_active: data.is_active ?? true
       })
     } catch (error) {
@@ -63,7 +77,7 @@ function AddOnEdit() {
           name: formData.name,
           description: formData.description,
           category: formData.category,
-          price: formData.price,
+          price: formData.price === '' ? 0 : formData.price,
           is_active: formData.is_active,
           updated_at: new Date().toISOString()
         })
@@ -156,7 +170,7 @@ function AddOnEdit() {
               <input
                 type="number"
                 value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                onChange={(e) => handlePriceChange(e.target.value)}
                 className="admin-input"
                 min="0"
                 step="0.01"
