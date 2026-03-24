@@ -151,29 +151,79 @@ function NewBooking() {
     let basePrice = 50 // Default price if no service found
     
     if (service && selectedVehicle) {
-      const size = selectedVehicle.vehicle_size || selectedVehicle.size
+      const size = selectedVehicle.vehicle_size || selectedVehicle.size || 'sedan'
       switch (size) {
         case 'sedan':
-          basePrice = service.base_price_sedan || 50
+          basePrice = parseFloat(service.base_price_sedan) || 50
           break
         case 'suv':
-          basePrice = service.base_price_suv || 50
+          basePrice = parseFloat(service.base_price_suv) || 50
           break
         case 'truck':
-          basePrice = service.base_price_truck || 50
+          basePrice = parseFloat(service.base_price_truck) || 50
           break
         case 'van':
-          basePrice = service.base_price_van || 50
+          basePrice = parseFloat(service.base_price_van) || 50
           break
         default:
-          basePrice = service.base_price_sedan || 50
+          basePrice = parseFloat(service.base_price_sedan) || 50
       }
     } else if (service) {
       // Use sedan price as default if no vehicle selected
-      basePrice = service.base_price_sedan || 50
+      basePrice = parseFloat(service.base_price_sedan) || 50
     }
     
-    setFormData(prev => ({ ...prev, total_cost: basePrice }))
+    const mappedServiceType = mapServiceTypeToEnum(formData.service_type)
+    setFormData(prev => ({ 
+      ...prev, 
+      total_cost: basePrice,
+      estimated_duration: service?.duration_minutes || 120,
+      service_type: mappedServiceType
+    }))
+  }
+
+  const mapServiceTypeToEnum = (serviceName) => {
+    const serviceMapping = {
+      'exterior': 'exterior',
+      'interior': 'interior',
+      'full detail': 'full_detail',
+      'full_detail': 'full_detail',
+      'premium': 'premium',
+      'basic': 'basic',
+      'standard': 'standard',
+      'express': 'express',
+      'deluxe': 'deluxe',
+      'mobile': 'mobile',
+      'wash': 'wash',
+      'wax': 'wax',
+      'polish': 'polish',
+      'ceramic': 'ceramic',
+      'test': 'test' // Allow test for development
+    }
+    
+    // Try exact match first
+    if (serviceMapping[serviceName.toLowerCase()]) {
+      return serviceMapping[serviceName.toLowerCase()]
+    }
+    
+    // Try partial matches
+    const lowerName = serviceName.toLowerCase()
+    if (lowerName.includes('exterior')) return 'exterior'
+    if (lowerName.includes('interior')) return 'interior'
+    if (lowerName.includes('full') || lowerName.includes('detail')) return 'full_detail'
+    if (lowerName.includes('premium')) return 'premium'
+    if (lowerName.includes('basic')) return 'basic'
+    if (lowerName.includes('standard')) return 'standard'
+    if (lowerName.includes('express')) return 'express'
+    if (lowerName.includes('deluxe')) return 'deluxe'
+    if (lowerName.includes('mobile')) return 'mobile'
+    if (lowerName.includes('wash')) return 'wash'
+    if (lowerName.includes('wax')) return 'wax'
+    if (lowerName.includes('polish')) return 'polish'
+    if (lowerName.includes('ceramic')) return 'ceramic'
+    
+    // Default to exterior if no match
+    return 'exterior'
   }
 
   const checkExistingBookings = async (date) => {
@@ -280,13 +330,16 @@ function NewBooking() {
     setLoading(true)
     
     try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .insert({
+      const mappedServiceType = mapServiceTypeToEnum(formData.service_type)
+      
+      console.log('DEBUG: Original service_type:', formData.service_type)
+      console.log('DEBUG: Mapped service_type:', mappedServiceType)
+      
+      const bookingData = {
           client_id: formData.client_id,
           vehicle_id: formData.vehicle_id,
           service_id: services.find(s => s.name === formData.service_type)?.id,
-          service_type: formData.service_type,
+          service_type: mappedServiceType, // Use mapped enum value
           vehicle_size: selectedVehicle?.vehicle_size || 'sedan',
           preferred_date: formData.booking_date,
           preferred_time: formData.booking_time,
@@ -299,7 +352,13 @@ function NewBooking() {
           total: formData.total_cost * 1.08,
           notes: formData.notes,
           status: formData.status || 'pending'
-        })
+      }
+      
+      console.log('DEBUG: Booking data being sent:', bookingData)
+      
+      const { data, error } = await supabase
+        .from('bookings')
+        .insert(bookingData)
         .select()
         .single()
 
@@ -340,35 +399,20 @@ function NewBooking() {
   const getServiceTypes = () => {
     const activeServices = services.filter(s => s.is_active)
     return activeServices.map(service => {
-      let price = 50 // Default price
+      // Create price string for all vehicle sizes
+      const prices = [
+        `Sedan: $${parseFloat(service.base_price_sedan || 0).toFixed(2)}`,
+        `SUV: $${parseFloat(service.base_price_suv || 0).toFixed(2)}`,
+        `Truck: $${parseFloat(service.base_price_truck || 0).toFixed(2)}`,
+        `Van: $${parseFloat(service.base_price_van || 0).toFixed(2)}`
+      ]
       
-      if (selectedVehicle) {
-        const size = selectedVehicle.vehicle_size || selectedVehicle.size
-        switch (size) {
-          case 'sedan':
-            price = service.base_price_sedan || 50
-            break
-          case 'suv':
-            price = service.base_price_suv || 50
-            break
-          case 'truck':
-            price = service.base_price_truck || 50
-            break
-          case 'van':
-            price = service.base_price_van || 50
-            break
-          default:
-            price = service.base_price_sedan || 50
-        }
-      } else {
-        // Use sedan price as default
-        price = service.base_price_sedan || 50
-      }
-
       return {
         value: service.name,
-        label: service.name.charAt(0).toUpperCase() + service.name.slice(1),
-        price: price
+        label: service.name,
+        description: service.description,
+        prices: prices.join(' | '),
+        duration: service.duration_minutes
       }
     })
   }
@@ -575,7 +619,7 @@ function NewBooking() {
                     key={service.value}
                     className="block bg-navy-light/30 rounded-lg p-4 border border-electric-blue/20 cursor-pointer hover:bg-navy-light/50 transition-colors"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center">
                         <input
                           type="radio"
@@ -583,15 +627,36 @@ function NewBooking() {
                           value={service.value}
                           checked={formData.service_type === service.value}
                           onChange={(e) => setFormData(prev => ({ ...prev, service_type: e.target.value }))}
-                          className="mr-3"
+                          className="mr-3 mt-1"
                         />
-                        <span className="text-light-gray font-medium">{service.label}</span>
+                        <div>
+                          <span className="text-light-gray font-medium block">{service.label}</span>
+                          {service.description && (
+                            <span className="text-xs text-light-gray/70 block mt-1">{service.description}</span>
+                          )}
+                        </div>
                       </div>
-                      <span className="text-green-400 font-semibold">${service.price}</span>
+                    </div>
+                    <div className="text-xs text-green-400 font-semibold ml-6">
+                      {service.prices}
                     </div>
                   </label>
                 ))}
               </div>
+              
+              {/* Current Price Display */}
+              {selectedVehicle && formData.service_type && (
+                <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-light-gray">
+                      Current Price ({selectedVehicle.vehicle_size || selectedVehicle.size || 'sedan'}):
+                    </span>
+                    <span className="text-lg font-bold text-green-400">
+                      ${formData.total_cost.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Date & Time Selection */}
