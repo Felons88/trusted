@@ -180,7 +180,7 @@ function ClientPortal() {
       <ClientNavigation />
       <div className="pt-14 sm:pt-16 pb-20 px-3 sm:px-4">
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold metallic-heading mb-2">
               Welcome back, {client?.full_name?.split(' ')[0] || 'Client'}!
@@ -472,7 +472,7 @@ function ClientPortal() {
               <p className="text-xs sm:text-sm text-light-gray">Manage your profile and payment methods</p>
             </Link>
           </div>
-        </div>
+          </div>
         </div>
       </div>
     </div>
