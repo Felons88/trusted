@@ -155,10 +155,12 @@ serve(async (req) => {
 
         if (!response.ok) {
           const error = await response.text()
+          console.error('Resend API error:', error)
           throw new Error(error)
         }
 
         const result = await response.json()
+        console.log('Email sent successfully:', result)
 
         return new Response(
           JSON.stringify({ success: true, messageId: result.id }),

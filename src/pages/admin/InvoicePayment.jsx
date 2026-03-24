@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { CreditCard, Smartphone, DollarSign, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import toast from 'react-hot-toast'
+import DiscountCodeInput from '../../components/DiscountCodeInput'
+import discountCodeService from '../../services/discountCodeService'
 
 function InvoicePayment() {
   const { id } = useParams()
@@ -11,6 +13,7 @@ function InvoicePayment() {
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState('card')
+  const [appliedDiscount, setAppliedDiscount] = useState(null)
   const [cardDetails, setCardDetails] = useState({
     number: '',
     exp_month: '',
@@ -45,18 +48,35 @@ function InvoicePayment() {
     }
   }
 
+  const handleDiscountApplied = (discountResult) => {
+    setAppliedDiscount(discountResult)
+  }
+
+  const handleDiscountRemoved = () => {
+    setAppliedDiscount(null)
+  }
+
+  const getCurrentAmount = () => {
+    if (!invoice) return 0
+    return appliedDiscount ? appliedDiscount.final_amount : invoice.total
+  }
+
   const handlePayment = async (e) => {
     e.preventDefault()
     setProcessing(true)
 
     try {
+      const currentAmount = getCurrentAmount()
+      
       // Create payment record
       const { error: paymentError } = await supabase
         .from('payments')
         .insert({
           invoice_id: id,
           client_id: invoice.client_id,
-          amount: invoice.total,
+          amount: currentAmount,
+          original_amount: invoice.total,
+          discount_amount: appliedDiscount ? appliedDiscount.discount_amount : 0,
           payment_method: paymentMethod,
           status: 'completed',
           transaction_id: `txn_${Date.now()}`,
@@ -68,8 +88,27 @@ function InvoicePayment() {
       // Update invoice status
       await supabase
         .from('invoices')
-        .update({ status: 'paid' })
+        .update({ 
+          status: 'paid',
+          paid_at: new Date().toISOString(),
+          discount_amount: appliedDiscount ? appliedDiscount.discount_amount : 0,
+          original_total: invoice.total,
+          total: currentAmount,
+          discount_code_id: appliedDiscount ? appliedDiscount.discount_code_id : null
+        })
         .eq('id', id)
+
+      // Record discount usage if applied
+      if (appliedDiscount && appliedDiscount.discount_code_id) {
+        await discountCodeService.recordDiscountUsage(
+          appliedDiscount.discount_code_id,
+          id,
+          invoice.client_id,
+          appliedDiscount.discount_amount,
+          invoice.total,
+          currentAmount
+        )
+      }
 
       // Redirect to success page
       navigate('/admin/invoices', { 
@@ -147,19 +186,40 @@ function InvoicePayment() {
             </div>
             <div className="border-t border-navy-light pt-3">
               <div className="flex justify-between items-center">
+                <span className="text-light-gray">Invoice Amount:</span>
+                <span className="text-light-gray">
+                  ${invoice.total?.toFixed(2) || '0.00'}
+                </span>
+              </div>
+              {appliedDiscount && (
+                <div className="flex justify-between items-center">
+                  <span className="text-green-400">Discount ({appliedDiscount.code}):</span>
+                  <span className="text-green-400">
+                    -${appliedDiscount.discount_amount.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-center">
                 <span className="text-lg font-semibold text-light-gray">Total Amount:</span>
                 <span className="text-2xl font-bold text-green-400">
-                  ${invoice.total?.toFixed(2) || '0.00'}
+                  ${getCurrentAmount()?.toFixed(2) || '0.00'}
                 </span>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Discount Code Input */}
+        <DiscountCodeInput
+          amount={invoice.total}
+          onDiscountApplied={handleDiscountApplied}
+          onDiscountRemoved={handleDiscountRemoved}
+          className="mb-6"
+        />
+
         {/* Payment Form */}
         <div className="glass-card p-6">
           <h2 className="text-xl font-semibold text-light-gray mb-6">Payment Method</h2>
-          
           <form onSubmit={handlePayment}>
             {/* Payment Method Selection */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -321,7 +381,7 @@ function InvoicePayment() {
               ) : (
                 <>
                   <CheckCircle size={20} />
-                  <span>Complete Payment - ${invoice.total?.toFixed(2) || '0.00'}</span>
+                  <span>Complete Payment - ${getCurrentAmount()?.toFixed(2) || '0.00'}</span>
                 </>
               )}
             </button>

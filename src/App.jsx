@@ -61,6 +61,7 @@ import VehicleDetail from './pages/client/VehicleDetail'
 import ClientSettings from './pages/client/ClientSettings'
 import ClientBookingDetail from './pages/client/ClientBookingDetail'
 import ClientVehicleEdit from './pages/client/ClientVehicleEdit'
+import DiscountCodes from './pages/admin/DiscountCodes'
 
 function App() {
   const { initialize } = useAuthStore()
@@ -132,6 +133,7 @@ function App() {
             <Route path="services" element={<Services />} />
             <Route path="services/new" element={<NewService />} />
             <Route path="services/:id/edit" element={<ServiceEdit />} />
+            <Route path="discount-codes" element={<DiscountCodes />} />
             <Route path="addons/new" element={<NewAddOn />} />
             <Route path="addons/:id/edit" element={<AddOnEdit />} />
             <Route path="quote-requests" element={<QuoteRequests />} />

@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Calendar, Users, Car, Package,
   DollarSign, Mail, FileText, Settings, LogOut,
   Menu, X, MessageSquare, Star,
-  Plus, Shield, Activity, TrendingUp
+  Plus, Shield, Activity, TrendingUp, Tag
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -39,6 +39,7 @@ function AdminLayout() {
     { icon: Users, label: 'Clients', path: '/admin/clients' },
     { icon: Car, label: 'Vehicles', path: '/admin/vehicles' },
     { icon: Package, label: 'Services & Add-ons', path: '/admin/services' },
+    { icon: Tag, label: 'Discount Codes', path: '/admin/discount-codes' },
     { icon: DollarSign, label: 'Payments', path: '/admin/payments' },
     { icon: FileText, label: 'Invoices', path: '/admin/invoices' },
     { icon: Plus, label: 'New Invoice', path: '/admin/invoices/new' },
@@ -109,10 +110,10 @@ function AdminLayout() {
         <div className={`fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
-          <div className="w-64 sm:w-72 lg:w-64 bg-white/10 backdrop-blur-md border-r border-white/20 h-full overflow-y-auto">
+          <div className="w-64 sm:w-72 lg:w-64 bg-white/10 backdrop-blur-md border-r border-white/20 h-screen lg:h-screen overflow-hidden flex flex-col">
             {/* Navigation */}
-            <nav className="p-2 sm:p-3">
-              <ul className="space-y-1 sm:space-y-2">
+            <nav className="flex-1 p-2 sm:p-3 overflow-y-auto">
+              <ul className="space-y-1 sm:space-y-2 pb-4">
                 {menuItems.map((item, index) => {
                   const isActive = location.pathname === item.path
                   return (
@@ -133,43 +134,24 @@ function AdminLayout() {
                   )
                 })}
               </ul>
-              
-              {/* Quick Stats */}
-              <div className="mt-3 sm:mt-4 p-2 sm:p-3 bg-gradient-to-br from-blue-600/20 to-purple-600/20 rounded-lg border border-white/10">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Activity className="text-blue-400" size={14} sm:size={16} />
-                  <span className="text-white font-semibold text-xs sm:text-sm">Quick Stats</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="text-white/80">
-                    <p className="text-blue-200 text-xs">Status</p>
-                    <p className="text-white font-bold text-xs">Active</p>
-                  </div>
-                  <div className="text-white/80">
-                    <p className="text-blue-200 text-xs">Role</p>
-                    <p className="text-white font-bold text-xs">Manager</p>
-                  </div>
-                  <div className="text-white/80">
-                    <p className="text-blue-200 text-xs">Live</p>
-                    <p className="text-white font-bold text-xs">Online</p>
-                  </div>
-                  <div className="text-white/80">
-                    <p className="text-blue-200 text-xs">Date</p>
-                    <p className="text-white font-bold text-xs">{new Date().toLocaleDateString()}</p>
-                  </div>
-                </div>
-              </div>
             </nav>
 
-            {/* User Account */}
-            <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3 border-t border-white/20">
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
-              >
-                <LogOut size={16} sm:size={20} />
-                <span className="text-sm sm:text-base">Logout</span>
-              </button>
+            {/* Quick Stats - Fixed at bottom */}
+            <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-600/20 to-purple-600/20 border-t border-white/10">
+              <div className="flex items-center space-x-2 mb-2">
+                <Activity className="text-blue-400" size={14} sm:size={16} />
+                <span className="text-white font-semibold text-xs sm:text-sm">Quick Stats</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="text-white/80">
+                  <p className="text-blue-200 text-xs">Status</p>
+                  <p className="text-white font-bold text-xs">Active</p>
+                </div>
+                <div className="text-white/80">
+                  <p className="text-blue-200 text-xs">Role</p>
+                  <p className="text-white font-bold text-xs">Admin</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

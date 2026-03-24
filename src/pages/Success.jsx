@@ -4,13 +4,9 @@ import { useNavigate } from 'react-router-dom'
 function Success() {
   const navigate = useNavigate()
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      navigate('/')
-    }, 5000)
-
-    return () => clearTimeout(timer)
-  }, [navigate])
+  const handleReviewRedirect = () => {
+    window.open('https://g.page/r/CWYdYXqTiWZ5EBM/review', '_blank')
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-navy-deep">
@@ -30,6 +26,20 @@ function Success() {
                 <li>• Schedule your next detailing service anytime</li>
               </ul>
             </div>
+            
+            <div className="bg-blue-600 p-4 rounded-lg">
+              <h3 className="text-white font-semibold mb-2">Share Your Experience!</h3>
+              <p className="text-blue-100 mb-4">
+                We'd love to hear about your experience with our service. Your feedback helps us improve and serves others in making informed decisions.
+              </p>
+              <button
+                onClick={handleReviewRedirect}
+                className="w-full bg-white text-blue-600 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
+              >
+                Leave a Google Review
+              </button>
+            </div>
+
             <div className="bg-navy-dark p-4 rounded-lg">
               <h3 className="text-white font-semibold mb-2">Need Help?</h3>
               <p className="text-light-gray mb-4">
@@ -49,12 +59,20 @@ function Success() {
             </div>
           </div>
           
-          <button
-            onClick={() => navigate('/')}
-            className="btn-primary w-full"
-          >
-            Return to Homepage
-          </button>
+          <div className="mt-6 space-y-3">
+            <button
+              onClick={() => navigate('/')}
+              className="btn-primary w-full"
+            >
+              Return to Homepage
+            </button>
+            <button
+              onClick={() => navigate('/client-portal')}
+              className="w-full bg-navy-dark text-white py-3 rounded-lg font-medium hover:bg-navy-lighter transition-colors"
+            >
+              View Client Portal
+            </button>
+          </div>
         </div>
       </div>
     </div>

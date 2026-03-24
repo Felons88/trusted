@@ -5,6 +5,8 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { CreditCard, Shield, CheckCircle, AlertCircle, ArrowLeft, Clock, DollarSign, Lock } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
+import DiscountCodeInput from '../components/DiscountCodeInput'
+import discountCodeService from '../services/discountCodeService'
 
 // Hardcode the Stripe key to bypass build cache issues
 const stripePromise = loadStripe('pk_live_51TEEY4KQoiN8mHgUcg9sArq8iMJjYpigcgKpYzUFIALtPtFnkV6mc96PFVdvE56nkAFrlb36I8QDuGwr3uyiMzCC00IxrT0w4Z')
@@ -15,6 +17,7 @@ function PaymentContent() {
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const [appliedDiscount, setAppliedDiscount] = useState(null)
   
   const { id } = useParams()
   const navigate = useNavigate()
@@ -156,6 +159,19 @@ function PaymentContent() {
     return canvas.toDataURL()
   }
 
+  const handleDiscountApplied = (discountResult) => {
+    setAppliedDiscount(discountResult)
+  }
+
+  const handleDiscountRemoved = () => {
+    setAppliedDiscount(null)
+  }
+
+  const getCurrentAmount = () => {
+    if (!invoice) return 0
+    return appliedDiscount ? appliedDiscount.final_amount : invoice.total
+  }
+
   const updatePaymentAttemptStatus = async (paymentAttemptId, status, reason = null) => {
     try {
       await supabase.rpc('update_payment_status', [
@@ -247,23 +263,36 @@ function PaymentContent() {
 
   const sendPaymentReceipt = async (invoiceData, paymentIntent, fees) => {
     try {
+      console.log('Sending payment receipt email...')
+      
       // Get last 4 digits of card
       const last4 = paymentIntent.payment_method?.card?.last4 || '****'
       
-      // Generate receipt HTML
-      const receiptHTML = generateReceiptHTML(invoiceData, paymentIntent, last4, fees)
+      // Prepare payment details for email
+      const paymentDetails = {
+        orderId: `${invoiceData.invoice_number}-${paymentIntent.id.slice(-8)}`,
+        amount: fees.finalAmount.toFixed(2),
+        method: `Credit Card ending in ${last4}`,
+        date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+        status: 'Paid'
+      }
+      
+      // Prepare booking details for email
+      const bookingDetails = {
+        serviceType: invoiceData.invoice_items?.[0]?.description || 'Auto Detailing Service',
+        date: new Date(invoiceData.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+        vehicleYear: 'N/A',
+        vehicleMake: 'N/A', 
+        vehicleModel: 'N/A',
+        totalAmount: fees.finalAmount.toFixed(2)
+      }
       
       // Send email via Supabase Edge Function
-      const { data, error } = await supabase.functions.invoke('send-payment-receipt', {
-        headers: {
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
-        },
+      const { data, error } = await supabase.functions.invoke('email-service', {
         body: {
-          toEmail: invoiceData.clients?.email,
-          subject: `Payment Receipt - Invoice ${invoiceData.invoice_number}`,
-          html: receiptHTML,
-          invoiceData: invoiceData,
-          paymentIntent: paymentIntent
+          customerEmail: invoiceData.clients?.email,
+          paymentDetails: paymentDetails,
+          bookingDetails: bookingDetails
         }
       })
 
@@ -271,7 +300,7 @@ function PaymentContent() {
         console.error('Email send error:', error)
         // Don't show error to user, just log it
       } else {
-        console.log('Payment receipt email sent successfully')
+        console.log('Payment receipt email sent successfully:', data)
       }
     } catch (error) {
       console.error('Failed to send payment receipt:', error)
@@ -587,11 +616,13 @@ function PaymentContent() {
       console.log('Starting payment process...')
       console.log('Invoice data:', invoice)
       
-      // Calculate fees
+      // Calculate fees based on current amount (with or without discount)
       const baseAmount = invoice?.total || 0
-      const fees = calculateFees(baseAmount)
+      const currentAmount = getCurrentAmount()
+      const fees = calculateFees(currentAmount)
       console.log('Payment fees calculated:', fees)
       console.log('Base amount:', baseAmount)
+      console.log('Current amount after discount:', currentAmount)
       console.log('Final amount to charge:', fees.finalAmount)
       
       // Step 1: Create payment method
@@ -768,10 +799,14 @@ function PaymentContent() {
           paid_at: new Date().toISOString(),
           stripe_payment_intent_id: confirmedIntent.id,
           base_amount: baseAmount,
+          discount_amount: appliedDiscount ? appliedDiscount.discount_amount : 0,
+          original_total: baseAmount,
+          total: currentAmount,
           stripe_fees: fees.stripeFee,
           platform_fees: fees.platformFee,
           total_fees: fees.totalFees,
-          total_charged: fees.finalAmount
+          total_charged: fees.finalAmount,
+          discount_code_id: appliedDiscount ? appliedDiscount.discount_code_id : null
         })
         .eq('id', id)
 
@@ -781,13 +816,23 @@ function PaymentContent() {
       } else {
         console.log('Invoice updated successfully')
         
+        // Record discount usage if a discount was applied
+        if (appliedDiscount && appliedDiscount.discount_code_id) {
+          await discountCodeService.recordDiscountUsage(
+            appliedDiscount.discount_code_id,
+            id,
+            invoice.clients?.id,
+            appliedDiscount.discount_amount,
+            baseAmount,
+            currentAmount
+          )
+        }
+        
         // Send payment receipt email with fees
         await sendPaymentReceipt(invoice, confirmedIntent, fees)
         
         setSuccess(true)
-        setTimeout(() => {
-          navigate('/success')
-        }, 3000)
+        navigate('/success')
       }
     } catch (err) {
       console.error('Payment error:', err)
@@ -846,7 +891,8 @@ function PaymentContent() {
   const items = invoice?.invoice_items || []
   const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0)
   const total = invoice?.total || subtotal
-  const fees = calculateFees(total)
+  const currentAmount = getCurrentAmount()
+  const fees = calculateFees(currentAmount)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
@@ -941,6 +987,16 @@ function PaymentContent() {
                       <td colSpan="2" className="py-3 px-4 text-slate-400 font-semibold">Invoice Amount</td>
                       <td className="py-3 px-4 text-right text-white font-semibold">${total.toFixed(2)}</td>
                     </tr>
+                    {appliedDiscount && (
+                      <tr>
+                        <td colSpan="2" className="py-3 px-4 text-green-400 font-semibold">
+                          Discount ({appliedDiscount.code})
+                        </td>
+                        <td className="py-3 px-4 text-right text-green-400 font-semibold">
+                          -${appliedDiscount.discount_amount.toFixed(2)}
+                        </td>
+                      </tr>
+                    )}
                     <tr>
                       <td colSpan="2" className="py-3 px-4 text-slate-400">Stripe Processing Fee (2.9% + $0.30)</td>
                       <td className="py-3 px-4 text-right text-slate-300">${fees.stripeFee.toFixed(2)}</td>
@@ -973,6 +1029,12 @@ function PaymentContent() {
                   <span className="text-blue-100">Invoice Amount:</span>
                   <span className="text-white font-semibold">${total.toFixed(2)}</span>
                 </div>
+                {appliedDiscount && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-green-300">Discount ({appliedDiscount.code}):</span>
+                    <span className="text-green-300 font-semibold">-${appliedDiscount.discount_amount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center">
                   <span className="text-blue-100">Processing Fees:</span>
                   <span className="text-white font-semibold">${fees.totalFees.toFixed(2)}</span>
@@ -985,6 +1047,14 @@ function PaymentContent() {
                 </div>
               </div>
             </div>
+
+            {/* Discount Code Input */}
+            <DiscountCodeInput
+              amount={total}
+              onDiscountApplied={handleDiscountApplied}
+              onDiscountRemoved={handleDiscountRemoved}
+              className="mb-6"
+            />
 
             {/* Payment Form */}
             <form onSubmit={handleSubmit} className="space-y-6">
