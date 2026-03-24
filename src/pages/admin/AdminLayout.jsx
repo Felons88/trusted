@@ -71,7 +71,6 @@ function AdminLayout() {
                 </div>
                 <div className="hidden sm:block">
                   <h1 className="text-lg sm:text-xl font-bold text-white">Trusted Detailing</h1>
-                  <p className="text-xs text-slate-400">Management Portal</p>
                 </div>
                 <div className="sm:hidden">
                   <h1 className="text-lg font-bold text-white">TD</h1>
@@ -79,26 +78,14 @@ function AdminLayout() {
               </div>
             </div>
 
-            {/* User Menu */}
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="hidden sm:flex items-center space-x-2 sm:space-x-3">
-                <div className="text-right">
-                  <p className="text-xs sm:text-sm font-medium text-white">{profile?.full_name || 'Manager'}</p>
-                  <p className="text-xs text-slate-400 hidden sm:block">{profile?.email}</p>
-                </div>
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">
-                    {profile?.full_name?.charAt(0)?.toUpperCase() || 'A'}
-                  </span>
-                </div>
-              </div>
-              
+            {/* User Menu - Simplified */}
+            <div className="flex items-center">
               <button
                 onClick={handleLogout}
-                className="text-white hover:text-red-400 transition-colors flex items-center space-x-1 sm:space-x-2 p-1"
+                className="text-white hover:text-red-400 transition-colors p-2"
+                title="Logout"
               >
-                <LogOut size={16} sm:size={20} />
-                <span className="hidden sm:inline text-xs sm:text-sm">Logout</span>
+                <LogOut size={20} />
               </button>
             </div>
           </div>

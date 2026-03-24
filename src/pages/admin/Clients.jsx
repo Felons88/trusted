@@ -48,6 +48,25 @@ function Clients() {
         }
         
         clients = uniqueClients
+        
+        // Calculate total_spent for each client from paid invoices
+        for (const client of clients) {
+          const { data: invoices, error: invoiceError } = await supabase
+            .from('invoices')
+            .select('total_charged, total, paid_amount, base_amount')
+            .eq('client_id', client.id)
+            .eq('status', 'paid')
+          
+          if (!invoiceError && invoices) {
+            const totalSpent = invoices.reduce((sum, invoice) => {
+              const amount = parseFloat(invoice.total_charged) || parseFloat(invoice.total) || parseFloat(invoice.paid_amount) || parseFloat(invoice.base_amount) || 0
+              return sum + amount
+            }, 0)
+            client.total_spent = totalSpent.toFixed(2)
+          } else {
+            client.total_spent = '0.00'
+          }
+        }
         console.log('Clients: Loaded', clients.length, 'unique clients (from', (data || []).length, 'total records)')
       } catch (err) {
         console.log('Clients: Error loading data, using empty array')

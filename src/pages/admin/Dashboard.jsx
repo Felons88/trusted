@@ -45,16 +45,18 @@ function Dashboard() {
       const vehicles = vehiclesResult.status === 'fulfilled' ? vehiclesResult.value.data || [] : []
       const services = servicesResult.status === 'fulfilled' ? servicesResult.value.data || [] : []
       
-      // Calculate REAL revenue from paid invoices - use correct column names
+      // Calculate REAL revenue from paid invoices - use the actual amount paid
       const paidInvoices = invoices.filter(inv => inv.status === 'paid')
       const totalRevenue = paidInvoices.reduce((sum, inv) => {
-        const amount = parseFloat(inv.total) || parseFloat(inv.paid_amount) || parseFloat(inv.base_amount) || 0
+        // Use the actual amount paid (after discounts) or total_charged if available
+        const amount = parseFloat(inv.total_charged) || parseFloat(inv.total) || parseFloat(inv.paid_amount) || parseFloat(inv.base_amount) || 0
         return sum + amount
       }, 0)
       
       // Calculate pending revenue from unpaid invoices
       const unpaidInvoices = invoices.filter(inv => inv.status !== 'paid')
       const pendingRevenue = unpaidInvoices.reduce((sum, inv) => {
+        // Use the current total amount (after discounts if applied)
         const amount = parseFloat(inv.total) || parseFloat(inv.balance_due) || parseFloat(inv.base_amount) || 0
         return sum + amount
       }, 0)
@@ -103,6 +105,13 @@ function Dashboard() {
       icon: DollarSign,
       color: 'electric-blue',
       link: '/admin/payments',
+    },
+    {
+      title: 'Outstanding Invoices',
+      value: `$${stats.pendingRevenue.toFixed(2)}`,
+      icon: AlertCircle,
+      color: 'orange',
+      link: '/admin/invoices?status=pending',
     },
     {
       title: 'Total Clients',
