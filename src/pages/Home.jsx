@@ -1,18 +1,59 @@
 import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { Sparkles, Shield, Star, Droplets, Wind, Wrench } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 function Home() {
-  const addOns = [
-    { category: 'Interior', name: 'Carpet Extraction', price: '$50' },
-    { category: 'Interior', name: 'Pet Hair Removal', price: '$25' },
-    { category: 'Interior', name: 'Vinyl & Plastics Rejuvenation', price: '$25' },
-    { category: 'Interior', name: 'Leather Treatment', price: '$25' },
-    { category: 'Exterior', name: 'Spray Sealant', price: '$20' },
-    { category: 'Exterior', name: 'Headlight Restoration', price: '$50' },
-    { category: 'Exterior', name: 'Engine Bay Cleaning', price: '$50' },
-    { category: 'Exterior', name: 'Trim Restoration', price: '$25' },
-    { category: 'Exterior', name: 'Tar / Sap Removal', price: '$25' },
-  ]
+  const [addOns, setAddOns] = useState([])
+  const [services, setServices] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      const [addOnsResult, servicesResult] = await Promise.all([
+        supabase
+          .from('add_ons')
+          .select('*')
+          .eq('is_active', true)
+          .order('category', { ascending: true }),
+        supabase
+          .from('services')
+          .select('*')
+          .eq('is_active', true)
+          .order('type', { ascending: true })
+      ])
+
+      if (addOnsResult.error) throw addOnsResult.error
+      if (servicesResult.error) throw servicesResult.error
+
+      setAddOns(addOnsResult.data || [])
+      setServices(servicesResult.data || [])
+    } catch (error) {
+      console.error('Error loading data:', error)
+      // Fallback to hardcoded data if database fails
+      setAddOns([
+        { category: 'Interior', name: 'Carpet Extraction', price: 50 },
+        { category: 'Interior', name: 'Pet Hair Removal', price: 25 },
+        { category: 'Interior', name: 'Vinyl & Plastics Rejuvenation', price: 25 },
+        { category: 'Interior', name: 'Leather Treatment', price: 25 },
+        { category: 'Exterior', name: 'Spray Sealant', price: 20 },
+        { category: 'Exterior', name: 'Headlight Restoration', price: 50 },
+        { category: 'Exterior', name: 'Engine Bay Cleaning', price: 50 },
+        { category: 'Exterior', name: 'Trim Restoration', price: 25 },
+        { category: 'Exterior', name: 'Tar / Sap Removal', price: 25 },
+      ])
+      setServices([
+        { type: 'exterior', name: 'Exterior Detailing', description: 'Complete exterior restoration including deep cleaning, paint protection, and shine enhancement.' },
+        { type: 'interior', name: 'Interior Detailing', description: 'Comprehensive interior cleaning and conditioning. Remove stains, odors, and restore that like-new feeling.' },
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="overflow-hidden">
@@ -83,32 +124,39 @@ function Home() {
           </h2>
           
           <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-            <div className="glass-card group cursor-pointer fade-in">
-              <div className="flex items-center mb-4">
-                <Droplets className="text-electric-blue mr-3" size={40} />
-                <h3 className="text-3xl font-bold metallic-heading">Exterior Detailing</h3>
-              </div>
-              <p className="text-light-gray mb-6">
-                Complete exterior restoration including deep cleaning, paint protection, and shine enhancement. Your vehicle will turn heads.
-              </p>
-              <Link to="/exterior-detailing" className="btn-secondary inline-block">
-                Learn More
-              </Link>
-            </div>
-
-            <div className="glass-card group cursor-pointer fade-in" style={{ animationDelay: '0.2s' }}>
-              <div className="flex items-center mb-4">
-                <Wind className="text-electric-blue mr-3" size={40} />
-                <h3 className="text-3xl font-bold metallic-heading">Interior Detailing</h3>
-              </div>
-              <p className="text-light-gray mb-6">
-                Comprehensive interior cleaning and conditioning. Remove stains, odors, and restore that like-new feeling.
-              </p>
-              <Link to="/interior-detailing" className="btn-secondary inline-block">
-                Learn More
-              </Link>
-            </div>
-          </div>
+            {loading ? (
+              // Loading skeleton for services
+              Array.from({ length: 2 }).map((_, index) => (
+                <div key={index} className="glass-card animate-pulse">
+                  <div className="h-10 bg-gray-600 rounded mb-4"></div>
+                  <div className="h-4 bg-gray-600 rounded mb-6"></div>
+                  <div className="h-8 bg-gray-600 rounded w-32"></div>
+                </div>
+              ))
+            ) : (
+              services.map((service, index) => (
+                <div 
+                  key={service.id || index} 
+                  className="glass-card group cursor-pointer fade-in"
+                  style={{ animationDelay: `${index * 0.2}s` }}
+                >
+                  <div className="flex items-center mb-4">
+                    {service.type === 'exterior' ? (
+                      <Droplets className="text-electric-blue mr-3" size={40} />
+                    ) : (
+                      <Wind className="text-electric-blue mr-3" size={40} />
+                    )}
+                    <h3 className="text-3xl font-bold metallic-heading">{service.name}</h3>
+                  </div>
+                  <p className="text-light-gray mb-6">
+                    {service.description}
+                  </p>
+                  <Link to={`/book-now?service=${service.type}`} className="btn-secondary inline-block">
+                    Book Now
+                  </Link>
+                </div>
+              ))
+            )}
         </div>
       </section>
 
@@ -122,21 +170,36 @@ function Home() {
           </p>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {addOns.map((addon, index) => (
-              <div
-                key={index}
-                className="glass-card group hover:scale-105 transition-transform duration-300 fade-in"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-lg font-bold text-metallic-silver group-hover:text-electric-blue transition-colors">
-                    {addon.name}
-                  </h4>
-                  <span className="text-bright-cyan font-bold text-xl">{addon.price}</span>
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="glass-card animate-pulse">
+                  <div className="h-4 bg-gray-600 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-600 rounded w-1/2"></div>
                 </div>
-                <span className="text-sm text-light-gray">{addon.category}</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              addOns.map((addon, index) => (
+                <div
+                  key={addon.id || index}
+                  className="glass-card group hover:scale-105 transition-transform duration-300 fade-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="text-lg font-bold text-metallic-silver group-hover:text-electric-blue transition-colors">
+                      {addon.name}
+                    </h4>
+                    <span className="text-bright-cyan font-bold text-xl">
+                      ${typeof addon.price === 'number' ? addon.price.toFixed(2) : addon.price}
+                    </span>
+                  </div>
+                  <p className="text-light-gray text-sm mb-3">{addon.description}</p>
+                  <div className="text-xs text-electric-blue font-semibold uppercase tracking-wide">
+                    {addon.category}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           <div className="text-center mt-12">
