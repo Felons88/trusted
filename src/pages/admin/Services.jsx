@@ -261,30 +261,60 @@ function Services() {
                           {addOn.is_active ? 'Active' : 'Inactive'}
                         </span>
                       </div>
-                      <p className="text-light-gray text-sm sm:text-base">{addOn.description}</p>
+                      <p className="text-light-gray text-sm sm:text-base mb-3">{addOn.description}</p>
+                      
+                      {/* Vehicle Pricing Grid for Add-ons */}
+                      <div className="grid grid-cols-2 gap-2 mb-3">
+                        {(addOn.base_price_sedan || addOn.base_price_suv || addOn.base_price_truck || addOn.base_price_van) ? (
+                          <>
+                            {addOn.base_price_sedan && (
+                              <div className="bg-navy-dark/30 rounded p-2">
+                                <p className="text-xs text-light-gray">Sedan</p>
+                                <p className="text-bright-cyan font-bold text-sm">${parseFloat(addOn.base_price_sedan).toFixed(2)}</p>
+                              </div>
+                            )}
+                            {addOn.base_price_suv && (
+                              <div className="bg-navy-dark/30 rounded p-2">
+                                <p className="text-xs text-light-gray">SUV</p>
+                                <p className="text-bright-cyan font-bold text-sm">${parseFloat(addOn.base_price_suv).toFixed(2)}</p>
+                              </div>
+                            )}
+                            {addOn.base_price_truck && (
+                              <div className="bg-navy-dark/30 rounded p-2">
+                                <p className="text-xs text-light-gray">Truck</p>
+                                <p className="text-bright-cyan font-bold text-sm">${parseFloat(addOn.base_price_truck).toFixed(2)}</p>
+                              </div>
+                            )}
+                            {addOn.base_price_van && (
+                              <div className="bg-navy-dark/30 rounded p-2">
+                                <p className="text-xs text-light-gray">Van</p>
+                                <p className="text-bright-cyan font-bold text-sm">${parseFloat(addOn.base_price_van).toFixed(2)}</p>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="text-green-400 font-bold text-lg sm:text-2xl">
+                            ${parseFloat(addOn.price || 0).toFixed(2)}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <div className="text-lg sm:text-2xl font-bold text-green-400">
-                      ${parseFloat(addOn.price || 0).toFixed(2)}
-                    </div>
-                    
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => toggleServiceStatus(addOn.id, addOn.is_active, 'addon')}
-                        className="text-electric-blue hover:text-bright-cyan text-xs sm:text-sm"
-                      >
-                        {addOn.is_active ? 'Disable' : 'Enable'}
-                      </button>
-                      <button
-                        onClick={() => handleEdit(addOn.id, 'addon')}
-                        className="text-electric-blue hover:text-bright-cyan"
-                        title="Edit add-on"
-                      >
-                        <Edit size={16} sm:size={20} />
-                      </button>
-                    </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => toggleServiceStatus(addOn.id, addOn.is_active, 'addon')}
+                      className="text-electric-blue hover:text-bright-cyan text-xs sm:text-sm"
+                    >
+                      {addOn.is_active ? 'Disable' : 'Enable'}
+                    </button>
+                    <button
+                      onClick={() => handleEdit(addOn.id, 'addon')}
+                      className="text-electric-blue hover:text-bright-cyan"
+                      title="Edit add-on"
+                    >
+                      <Edit size={16} sm:size={20} />
+                    </button>
                   </div>
                 </div>
               ))
