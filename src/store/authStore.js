@@ -118,4 +118,26 @@ export const useAuthStore = create((set, get) => ({
     const { profile } = get()
     return profile?.role === 'client'
   },
+
+  isTwoFactorEnabled: async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_two_factor')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('is_enabled', true)
+        .single()
+      
+      // If table doesn't exist or no 2FA setup, return false
+      if (error && (error.code === 'PGRST116' || error.code === '42P01')) {
+        console.log('2FA table not found or no 2FA setup for user')
+        return false
+      }
+      
+      return !error && data
+    } catch (error) {
+      console.error('Error checking 2FA status:', error)
+      return false
+    }
+  },
 }))

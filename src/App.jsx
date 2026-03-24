@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { useAuthStore } from './store/authStore-emergency'
+import { useAuthStore } from './store/authStore'
 import Navigation from './components/Navigation'
 import FloatingCallButton from './components/FloatingCallButton'
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'

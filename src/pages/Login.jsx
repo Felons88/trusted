@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore-emergency'
+import { useAuthStore } from '../store/authStore'
 import { Car, Mail, Lock, ArrowLeft, RefreshCw, LogIn, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import TwoFactorLoginModal from '../components/TwoFactorLoginModal'
@@ -52,22 +52,16 @@ function Login() {
       
       toast.success('Welcome back! Nice to see you again!')
       
-      // Immediate redirect since profile is now loaded synchronously
-      console.log('Login: Checking profile for redirect', { 
-        email: profile?.email, 
-        role: profile?.role,
-        profile: profile 
-      })
+      // Let the auth state change handle the redirect
+      console.log('Login: Sign in successful, auth state change will handle redirect')
       
-      if (profile?.role === 'admin') {
-        console.log('Login: Redirecting to admin panel')
-        navigate('/admin')
-      } else if (profile?.role === 'client') {
-        console.log('Login: Redirecting to client portal')
-        navigate('/client-portal')
+      // Navigate based on stored redirect or default
+      if (from === '/login' || from === '/') {
+        // Check user role from user metadata or wait for profile
+        const userRole = result.user.user_metadata?.role || 'client'
+        navigate(userRole === 'admin' ? '/admin' : '/client-portal')
       } else {
-        console.log('Login: No profile role found, staying on login page')
-        setError('Profile not loaded properly. Please try again.')
+        navigate(from, { replace: true })
       }
     } catch (err) {
       console.error('Login: Sign in failed', err)

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore-emergency'
+import { useAuthStore } from '../store/authStore'
 
 export function ProtectedRoute({ children, requireAdmin = false }) {
   const { user, profile, loading } = useAuthStore()
