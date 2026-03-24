@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { useAuthStore } from '../../store/authStore-emergency'
+import { useAuthStore } from '../../store/authStore'
 import { Calendar, Car, DollarSign, Clock, Plus, Eye, RefreshCw, Settings, User } from 'lucide-react'
 import { format } from 'date-fns'
 import ClientNavigation from '../../components/ClientNavigation'
@@ -12,6 +12,7 @@ function ClientPortal() {
   const [client, setClient] = useState(null)
   const [bookings, setBookings] = useState([])
   const [vehicles, setVehicles] = useState([])
+  const [invoices, setInvoices] = useState([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -62,8 +63,17 @@ function ClientPortal() {
           .eq('client_id', existingClient.id)
           .eq('is_active', true)
 
+        // Load invoices for existing client
+        const { data: invoicesData } = await supabase
+          .from('invoices')
+          .select('*')
+          .eq('client_id', existingClient.id)
+          .order('created_at', { ascending: false })
+          .limit(5)
+
         setBookings(bookingsData || [])
         setVehicles(vehiclesData || [])
+        setInvoices(invoicesData || [])
       } else {
         // Create a client record for this user
         console.log('No client record found, creating one...')
@@ -98,6 +108,7 @@ function ClientPortal() {
         // Initialize empty arrays for new clients
         setBookings([])
         setVehicles([])
+        setInvoices([])
       }
 
       if (isRefresh) {
@@ -120,6 +131,7 @@ function ClientPortal() {
       })
       setBookings([])
       setVehicles([])
+      setInvoices([])
       
       if (isRefresh) {
         setRefreshing(false)
@@ -140,6 +152,8 @@ function ClientPortal() {
     upcomingBookings: bookings.filter(b => 
       new Date(b.preferred_date) >= new Date() && b.status !== 'cancelled'
     ).length,
+    paidInvoices: invoices.filter(inv => inv.status === 'paid').length,
+    pendingInvoices: invoices.filter(inv => inv.status !== 'paid').length,
   }
 
   const getStatusColor = (status) => {
@@ -346,7 +360,87 @@ function ClientPortal() {
               </div>
             )}
           </div>
-        </div>
+
+          <div className="glass-card p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-3">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold metallic-heading">Recent Invoices</h2>
+              <div className="flex gap-2">
+                <div className="text-xs text-light-gray flex items-center">
+                  <div className="w-2 h-2 bg-green-400 rounded-full mr-1"></div>
+                  Paid: {stats.paidInvoices}
+                </div>
+                <div className="text-xs text-light-gray flex items-center">
+                  <div className="w-2 h-2 bg-yellow-400 rounded-full mr-1"></div>
+                  Pending: {stats.pendingInvoices}
+                </div>
+              </div>
+            </div>
+
+            {invoices.length === 0 ? (
+              <div className="text-center py-6 sm:py-8">
+                <DollarSign className="text-light-gray mx-auto mb-3 sm:mb-4" size={40} />
+                <p className="text-light-gray mb-3 sm:mb-4 text-sm sm:text-base">No invoices yet</p>
+                <Link to="/book-now" className="btn-primary inline-block text-sm">
+                  Book Your First Service
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3 sm:space-y-4">
+                {invoices.map((invoice) => (
+                  <div
+                    key={invoice.id}
+                    className="bg-navy-dark/50 border border-electric-blue/20 rounded-lg p-3 sm:p-4 hover:border-electric-blue transition-all"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-metallic-silver text-sm sm:text-base">
+                            Invoice #{invoice.invoice_number}
+                          </h3>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            invoice.status === 'paid' 
+                              ? 'bg-green-500/20 text-green-400' 
+                              : 'bg-yellow-500/20 text-yellow-400'
+                          }`}>
+                            {invoice.status === 'paid' ? 'Paid' : 'Pending'}
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-light-gray">
+                          {format(new Date(invoice.created_at), 'MMM dd, yyyy')}
+                        </p>
+                        {invoice.due_date && (
+                          <p className="text-xs text-light-gray">
+                            Due: {format(new Date(invoice.due_date), 'MMM dd, yyyy')}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right ml-2 flex-shrink-0">
+                        <span className="text-bright-cyan font-bold text-sm sm:text-base">
+                          ${parseFloat(invoice.total || invoice.balance_due || 0).toFixed(2)}
+                        </span>
+                        {invoice.status !== 'paid' && (
+                          <Link
+                            to={`/payment/${invoice.id}`}
+                            className="block text-electric-blue hover:text-bright-cyan text-xs sm:text-sm mt-1"
+                          >
+                            Pay Now →
+                          </Link>
+                        )}
+                        {invoice.status === 'paid' && (
+                          <Link
+                            to={`/success?invoice=${invoice.id}`}
+                            className="block text-green-400 hover:text-green-300 text-xs sm:text-sm mt-1"
+                          >
+                            View Receipt →
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
         <div className="glass-card p-4 sm:p-6">
           <h2 className="text-lg sm:text-xl lg:text-2xl font-bold metallic-heading mb-4 sm:mb-6">Quick Actions</h2>

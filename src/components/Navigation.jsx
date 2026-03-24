@@ -61,6 +61,9 @@ function Navigation() {
             <Link to="/quote" className="btn-primary text-xs sm:text-sm px-4 sm:px-6 py-2">
               Get Quote
             </Link>
+            <Link to="/client-portal" className="btn-secondary text-xs sm:text-sm px-4 sm:px-6 py-2">
+              Customer Portal
+            </Link>
           </div>
 
           <button
@@ -102,6 +105,13 @@ function Navigation() {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Get Quote
+            </Link>
+            <Link
+              to="/client-portal"
+              className="btn-secondary inline-block mt-2 mx-4 text-sm"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Customer Portal
             </Link>
           </div>
         </div>
