@@ -6,6 +6,7 @@ import {
   Clock, Star, MessageSquare, FileText, TrendingUp, Award, AlertCircle, Eye, Map
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import EmailHistory from '../../components/EmailHistory'
 
 function ClientDetail() {
   const { id } = useParams()
@@ -633,6 +634,18 @@ function ClientDetail() {
             </Link>
           </div>
         )}
+      </div>
+
+      {/* Email History */}
+      <div className="glass-card p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-light-gray flex items-center">
+            <Mail className="text-electric-blue mr-3" size={24} />
+            Email History
+          </h3>
+        </div>
+
+        <EmailHistory clientId={client?.user_id} clientUserId={client?.user_id} />
       </div>
     </div>
   )
