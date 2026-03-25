@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { format } from 'date-fns'
 import { 
   TrendingUp, Users, Globe, Bot, ExternalLink, 
-  Calendar, Filter, Download, Eye, Smartphone, Monitor, Tablet
+  Calendar, Filter, Download, Eye, Smartphone, Monitor, Tablet,
+  ArrowRight
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -270,11 +272,13 @@ function Analytics() {
             <thead>
               <tr className="border-b border-electric-blue/20">
                 <th className="text-left py-3 px-4 text-light-gray font-semibold">Time</th>
+                <th className="text-left py-3 px-4 text-light-gray font-semibold">Session</th>
                 <th className="text-left py-3 px-4 text-light-gray font-semibold">Page</th>
                 <th className="text-left py-3 px-4 text-light-gray font-semibold">Referrer</th>
                 <th className="text-left py-3 px-4 text-light-gray font-semibold">Device</th>
                 <th className="text-left py-3 px-4 text-light-gray font-semibold">Browser</th>
                 <th className="text-left py-3 px-4 text-light-gray font-semibold">Bot</th>
+                <th className="text-left py-3 px-4 text-light-gray font-semibold">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -282,6 +286,14 @@ function Analytics() {
                 <tr key={visit.id} className="border-b border-navy-dark hover:bg-navy-dark/30 transition-colors">
                   <td className="py-3 px-4 text-metallic-silver text-sm">
                     {format(new Date(visit.created_at), 'MMM dd, HH:mm')}
+                  </td>
+                  <td className="py-3 px-4 text-metallic-silver text-sm">
+                    <Link 
+                      to={`/admin/analytics/${visit.session_id}`}
+                      className="text-electric-blue hover:underline font-mono text-xs"
+                    >
+                      {visit.session_id?.substring(0, 8)}...
+                    </Link>
                   </td>
                   <td className="py-3 px-4 text-metallic-silver text-sm">
                     {visit.page_path}
@@ -321,6 +333,16 @@ function Analytics() {
                         Human
                       </span>
                     )}
+                  </td>
+                  <td className="py-3 px-4">
+                    <Link 
+                      to={`/admin/analytics/${visit.session_id}`}
+                      className="text-electric-blue hover:text-bright-cyan flex items-center space-x-1"
+                      title="View session details"
+                    >
+                      <Eye size={16} />
+                      <span className="text-xs">Details</span>
+                    </Link>
                   </td>
                 </tr>
               ))}

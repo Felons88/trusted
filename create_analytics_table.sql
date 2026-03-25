@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS public.analytics_visits (
   city text,
   
   -- Performance metrics
-  page_load_time integer, -- milliseconds
+  page_load_time bigint, -- milliseconds (bigint to handle larger values)
   
   -- Additional metadata
   metadata jsonb DEFAULT '{}'::jsonb

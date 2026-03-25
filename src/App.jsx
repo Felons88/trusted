@@ -57,6 +57,7 @@ import PaymentDetail from './pages/admin/PaymentDetail'
 import Messages from './pages/admin/Messages'
 import Settings from './pages/admin/Settings'
 import AdminAnalytics from './pages/admin/Analytics'
+import AnalyticsDetail from './pages/admin/AnalyticsDetail'
 import Payment from './pages/Payment'
 import Success from './pages/Success'
 import Receipt from './pages/Receipt'
@@ -156,6 +157,7 @@ function App() {
             <Route path="payments/:id" element={<PaymentDetail />} />
             <Route path="messages" element={<Messages />} />
             <Route path="analytics" element={<AdminAnalytics />} />
+            <Route path="analytics/:sessionId" element={<AnalyticsDetail />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

@@ -136,10 +136,28 @@ class AnalyticsService {
 
       // Get IP address from ipify API
       let ipAddress = null
+      let country = null
+      let region = null
+      let city = null
       try {
         const ipResponse = await fetch('https://api.ipify.org?format=json')
         const ipData = await ipResponse.json()
         ipAddress = ipData.ip
+        
+        // Get location data from ip-api.com (free, no API key required)
+        if (ipAddress) {
+          try {
+            const locationResponse = await fetch(`http://ip-api.com/json/${ipAddress}`)
+            const locationData = await locationResponse.json()
+            if (locationData.status === 'success') {
+              country = locationData.country
+              region = locationData.regionName
+              city = locationData.city
+            }
+          } catch (locationError) {
+            console.warn('Could not fetch location data:', locationError)
+          }
+        }
       } catch (error) {
         console.warn('Could not fetch IP address:', error)
       }
@@ -162,7 +180,12 @@ class AnalyticsService {
         browser_version: browserVersion,
         os_name: osName,
         os_version: osVersion,
-        page_load_time: performance.timing?.loadEventEnd - performance.timing?.navigationStart || null,
+        country: country,
+        region: region,
+        city: city,
+        page_load_time: performance.timing?.loadEventEnd && performance.timing?.navigationStart 
+          ? Math.min(performance.timing.loadEventEnd - performance.timing.navigationStart, 2147483647) 
+          : null,
         metadata: {
           screen_width: window.screen.width,
           screen_height: window.screen.height,
@@ -180,7 +203,7 @@ class AnalyticsService {
       if (error) {
         console.error('Analytics tracking error:', error)
       } else {
-        console.log('Analytics tracked:', { path: visitData.page_path, isBot, botName, ip: ipAddress })
+        console.log('Analytics tracked:', { path: visitData.page_path, isBot, botName, ip: ipAddress, location: `${city}, ${region}, ${country}` })
       }
     } catch (error) {
       console.error('Analytics tracking failed:', error)
