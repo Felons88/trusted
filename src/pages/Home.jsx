@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { Sparkles, Shield, Star, Droplets, Wind, Wrench } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import Navigation from '../components/Navigation'
 
 function Home() {
   const [addOns, setAddOns] = useState([])
@@ -57,6 +58,7 @@ function Home() {
 
   return (
     <div className="overflow-hidden">
+      <Navigation />
       <section className="relative min-h-screen flex items-center justify-center pt-20">
         <div className="absolute inset-0 bg-gradient-to-b from-navy-deep via-navy-dark to-navy-deep opacity-95"></div>
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1619405399517-d7fce0f13302?q=80&w=2070')] bg-cover bg-center mix-blend-overlay opacity-20"></div>
@@ -157,6 +159,7 @@ function Home() {
                 </div>
               ))
             )}
+          </div>
         </div>
       </section>
 

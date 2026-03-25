@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { useAuthStore } from '../../store/authStore-emergency'
+import { useAuthStore } from '../../store/authStore'
 import { 
   Calendar, Clock, DollarSign, Car, ArrowLeft, 
   MapPin, Phone, Mail, CheckCircle, AlertCircle,
-  User, FileText, Download, MessageSquare 
+  User, FileText, Download, MessageSquare, Plus
 } from 'lucide-react'
 import { format } from 'date-fns'
 import ClientNavigation from '../../components/ClientNavigation'
@@ -47,10 +47,15 @@ function ClientBookingDetail() {
 
       setClient(clientData)
 
-      // Get booking data
+      // Get booking data with addons
       const { data: bookingData } = await supabase
         .from('bookings')
-        .select('*')
+        .select(`
+          *,
+          booking_addons (
+            addons (id, name, price, duration_minutes)
+          )
+        `)
         .eq('id', id)
         .eq('client_id', clientData.id)
         .single()
@@ -60,6 +65,9 @@ function ClientBookingDetail() {
         navigate('/client-portal')
         return
       }
+
+      console.log('Client booking data loaded:', bookingData)
+      console.log('Client booking addons:', bookingData.booking_addons)
 
       setBooking(bookingData)
 
@@ -83,7 +91,7 @@ function ClientBookingDetail() {
   }
 
   const handleCancelBooking = async () => {
-    if (!confirm('Are you sure you want to cancel this booking? Cancellation policies may apply.')) {
+    if (!confirm('Are you sure you want to cancel this booking?')) {
       return
     }
 
@@ -95,18 +103,83 @@ function ClientBookingDetail() {
           status: 'cancelled',
           updated_at: new Date().toISOString()
         })
-        .eq('id', booking.id)
+        .eq('id', id)
 
       if (error) throw error
 
       toast.success('Booking cancelled successfully')
-      loadBookingData() // Reload booking data
+      setBooking(prev => ({ ...prev, status: 'cancelled', updated_at: new Date().toISOString() }))
     } catch (error) {
       console.error('Error cancelling booking:', error)
-      toast.error('Failed to cancel booking')
+      toast.error('Error cancelling booking')
     } finally {
       setCancelling(false)
     }
+  }
+
+  const handleContactSupport = () => {
+    // Open email client with support
+    const subject = `Support Request - Booking ${booking?.invoice_number || booking?.id?.slice(0, 8)}`
+    const body = `Hello Trusted Mobile Detailing,
+
+I need help with my booking:
+
+Booking ID: ${booking?.id}
+Service: ${booking?.service_type}
+Date: ${booking?.preferred_date}
+Time: ${booking?.preferred_time}
+
+Issue: [Please describe your issue here]
+
+Thank you`
+    
+    window.location.href = `mailto:info@trustedmobiledetailing.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  }
+
+  const handleDownloadReceipt = () => {
+    // Generate a simple receipt for now
+    const receiptContent = `
+TRUSTED MOBILE DETAILING - RECEIPT
+
+Booking ID: ${booking?.invoice_number || booking?.id?.slice(0, 8)}
+Date: ${new Date().toLocaleDateString()}
+
+SERVICE DETAILS:
+Service Type: ${booking?.service_type?.charAt(0).toUpperCase() + booking?.service_type?.slice(1)} Detail
+Date: ${booking?.preferred_date}
+Time: ${booking?.preferred_time}
+Status: ${booking?.status?.replace('_', ' ').toUpperCase()}
+
+VEHICLE:
+${vehicle?.year} ${vehicle?.make} ${vehicle?.model}
+Color: ${vehicle?.color}
+Size: ${vehicle?.size}
+
+PRICING:
+Subtotal: $${booking?.subtotal || '0.00'}
+Total: $${booking?.total || '0.00'}
+
+SERVICE ADDRESS:
+${booking?.service_address}
+
+NOTES:
+${booking?.notes || 'None'}
+
+Thank you for choosing Trusted Mobile Detailing!
+    `.trim()
+
+    // Create and download text file
+    const blob = new Blob([receiptContent], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `receipt-${booking?.invoice_number || booking?.id?.slice(0, 8)}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    
+    toast.success('Receipt downloaded successfully')
   }
 
   const getStatusColor = (status) => {
@@ -133,20 +206,25 @@ function ClientBookingDetail() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-electric-blue"></div>
       </div>
     )
   }
 
-  if (!booking || !client) {
+  if (!booking) {
     return (
-      <div className="min-h-screen bg-navy-gradient pt-24 pb-20 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-4xl font-bold metallic-heading mb-4">Booking Not Found</h1>
-          <p className="text-light-gray mb-6">The booking you're looking for doesn't exist or you don't have access to it.</p>
-          <Link to="/client-portal" className="btn-primary">
-            Back to Dashboard
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <Calendar className="mx-auto h-16 w-16 text-light-gray mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Booking Not Found</h2>
+          <p className="text-light-gray mb-6">The booking you're looking for doesn't exist.</p>
+          <Link 
+            to="/client-portal/bookings"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-electric-blue hover:bg-electric-blue/90 rounded-lg text-white font-semibold transition-colors"
+          >
+            <ArrowLeft size={20} />
+            Back to Bookings
           </Link>
         </div>
       </div>
@@ -154,35 +232,31 @@ function ClientBookingDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-navy-gradient">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <ClientNavigation />
-      <div className="pt-16 pb-20 px-4">
-        <div className="max-w-4xl mx-auto space-y-8">
+      
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="flex justify-between items-start">
-          <div>
-            <Link
-              to="/client-portal"
-              className="text-light-gray hover:text-electric-blue transition-colors flex items-center mb-4"
-            >
-              <ArrowLeft size={20} className="mr-2" />
-              Back to Dashboard
-            </Link>
-            <h1 className="text-4xl font-bold metallic-heading mb-2">Booking Details</h1>
-            <p className="text-light-gray">Booking #{booking.booking_number}</p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <span className={`px-4 py-2 rounded-full text-sm font-semibold border flex items-center gap-2 ${getStatusColor(booking.status)}`}>
-              {getStatusIcon(booking.status)}
+        <div className="mb-8">
+          <Link 
+            to="/client-portal/bookings"
+            className="inline-flex items-center gap-2 text-light-gray hover:text-metallic-silver mb-6 transition-colors"
+          >
+            <ArrowLeft size={20} />
+            <span>Back to Bookings</span>
+          </Link>
+          <h1 className="text-3xl font-bold text-white mb-2">Booking Details</h1>
+          <p className="text-light-gray">View your appointment information</p>
+        </div>
+
+        {/* Service Information Card */}
+        <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20 mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white">Service Information</h2>
+            <span className={`px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(booking.status)}`}>
               {booking.status.replace('_', ' ').toUpperCase()}
             </span>
           </div>
-        </div>
-
-        {/* Booking Overview Card */}
-        <div className="glass-card">
-          <h2 className="text-2xl font-bold metallic-heading mb-6">Service Information</h2>
           
           <div className="grid md:grid-cols-2 gap-8">
             {/* Left Column */}
@@ -214,18 +288,23 @@ function ClientBookingDetail() {
                 )}
               </div>
 
-              <div className="bg-navy-dark/50 border border-electric-blue/20 rounded-lg p-4">
-                <div className="flex items-center mb-3">
-                  <DollarSign className="text-electric-blue mr-3" size={20} />
-                  <h3 className="font-bold text-metallic-silver">Pricing</h3>
+              {/* Add-ons Section */}
+              {booking.booking_addons && booking.booking_addons.length > 0 && (
+                <div className="bg-navy-dark/50 border border-electric-blue/20 rounded-lg p-4">
+                  <div className="flex items-center mb-3">
+                    <Plus className="text-electric-blue mr-3" size={20} />
+                    <h3 className="font-bold text-metallic-silver">Add-ons</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {booking.booking_addons.map((ba, index) => (
+                      <div key={index} className="flex justify-between items-center">
+                        <span className="text-metallic-silver text-sm">{ba.addons?.name}</span>
+                        <span className="text-bright-cyan font-semibold">${parseFloat(ba.addons?.price || 0).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-2xl font-bold text-bright-cyan">${booking.total}</p>
-                {booking.deposit_amount && (
-                  <p className="text-sm text-light-gray">
-                    Deposit paid: ${booking.deposit_amount}
-                  </p>
-                )}
-              </div>
+              )}
             </div>
 
             {/* Right Column */}
@@ -239,7 +318,18 @@ function ClientBookingDetail() {
                   {booking.service_location === 'mobile' ? 'Mobile Service' : 'Shop Location'}
                 </p>
                 {booking.service_address && (
-                  <p className="text-sm text-light-gray mt-2">{booking.service_address}</p>
+                  <div className="mt-2">
+                    <p className="text-sm text-light-gray">{booking.service_address}</p>
+                    {booking.service_location === 'shop' && (
+                      <button
+                        onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(booking.service_address)}`, '_blank')}
+                        className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-electric-blue/20 border border-electric-blue/30 rounded-lg text-electric-blue hover:bg-electric-blue/30 transition-colors text-sm font-medium"
+                      >
+                        <MapPin size={14} />
+                        Get Directions
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -251,6 +341,33 @@ function ClientBookingDetail() {
                 <p className="text-metallic-silver">{client.full_name}</p>
                 <p className="text-sm text-light-gray">{client.phone}</p>
                 <p className="text-sm text-light-gray">{client.email}</p>
+              </div>
+
+              {/* Pricing Section */}
+              <div className="bg-navy-dark/50 border border-electric-blue/20 rounded-lg p-4">
+                <div className="flex items-center mb-3">
+                  <DollarSign className="text-electric-blue mr-3" size={20} />
+                  <h3 className="font-bold text-metallic-silver">Pricing</h3>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-light-gray">Subtotal:</span>
+                    <span className="text-metallic-silver">${booking.subtotal || '0.00'}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-light-gray">Tax (6.875%):</span>
+                    <span className="text-metallic-silver">${booking.tax || '0.00'}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-electric-blue/20">
+                    <span className="text-metallic-silver font-semibold">Total:</span>
+                    <span className="text-2xl font-bold text-bright-cyan">${booking.total}</span>
+                  </div>
+                  {booking.deposit_amount && (
+                    <p className="text-sm text-light-gray mt-2">
+                      Deposit paid: ${booking.deposit_amount}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {booking.notes && (
@@ -327,8 +444,8 @@ function ClientBookingDetail() {
         </div>
 
         {/* Actions */}
-        <div className="glass-card">
-          <h2 className="text-2xl font-bold metallic-heading mb-6">Actions</h2>
+        <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
+          <h2 className="text-2xl font-bold text-white mb-6">Actions</h2>
           <div className="grid md:grid-cols-2 gap-4">
             {booking.status === 'pending' && (
               <button
@@ -346,7 +463,10 @@ function ClientBookingDetail() {
               </button>
             )}
 
-            <button className="bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-4 hover:bg-electric-blue/30 transition-colors text-left">
+            <button 
+              onClick={handleContactSupport}
+              className="bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-4 hover:bg-electric-blue/30 transition-colors text-left"
+            >
               <div className="flex items-center">
                 <MessageSquare className="text-electric-blue mr-3" size={20} />
                 <div>
@@ -356,7 +476,10 @@ function ClientBookingDetail() {
               </div>
             </button>
 
-            <button className="bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-4 hover:bg-electric-blue/30 transition-colors text-left">
+            <button 
+              onClick={handleDownloadReceipt}
+              className="bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-4 hover:bg-electric-blue/30 transition-colors text-left"
+            >
               <div className="flex items-center">
                 <Download className="text-electric-blue mr-3" size={20} />
                 <div>
@@ -367,7 +490,7 @@ function ClientBookingDetail() {
             </button>
 
             <Link
-              to="/book-now"
+              to="/client-portal/bookings/new"
               className="bg-electric-blue/20 border border-electric-blue/30 rounded-lg p-4 hover:bg-electric-blue/30 transition-colors text-left block"
             >
               <div className="flex items-center">
@@ -379,7 +502,6 @@ function ClientBookingDetail() {
               </div>
             </Link>
           </div>
-        </div>
         </div>
       </div>
     </div>

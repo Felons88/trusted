@@ -35,13 +35,27 @@ function Bookings() {
           .select(`
             *,
             clients (full_name, email, phone),
-            vehicles (year, make, model, license_plate)
+            vehicles (year, make, model, license_plate),
+            services (id, name, base_price_sedan, base_price_suv, base_price_truck),
+            booking_addons (
+              addons (id, name, price)
+            )
           `)
           .order('created_at', { ascending: false })
 
         if (error) throw error
-        bookings = data || []
-        console.log('Bookings: Loaded', bookings.length, 'bookings')
+        
+        // Use the actual booking total from database, don't calculate
+        bookings = (data || []).map(booking => {
+          console.log('Processing booking:', booking.id, 'with total:', booking.total)
+          
+          return {
+            ...booking,
+            total_cost: parseFloat(booking.total || booking.subtotal || 0)
+          }
+        })
+        
+        console.log('Bookings: Loaded', bookings.length, 'bookings with calculated prices')
       } catch (err) {
         console.log('Bookings: Error loading data, using empty array')
         bookings = []

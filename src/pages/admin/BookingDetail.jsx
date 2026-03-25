@@ -23,17 +23,109 @@ function BookingDetail() {
 
   const loadBooking = async () => {
     try {
+      console.log('Loading booking details for ID:', id)
+      
       const { data, error } = await supabase
         .from('bookings')
         .select(`
           *,
           clients (full_name, email, phone, address),
-          vehicles (year, make, model, color, license_plate, vehicle_size)
+          vehicles (year, make, model, color, license_plate, size),
+          services (id, name, base_price_sedan, base_price_suv, base_price_truck),
+          booking_addons (
+            addons (id, name, price, duration_minutes)
+          )
         `)
         .eq('id', id)
         .single()
 
       if (error) throw error
+      
+      console.log('Booking data loaded:', data)
+      console.log('Booking addons loaded:', data.booking_addons)
+      console.log('Addons count:', data.booking_addons?.length || 0)
+      
+      // Try loading booking_addons separately to check RLS
+      try {
+        const { data: addonsData, error: addonsError } = await supabase
+          .from('booking_addons')
+          .select(`
+            *,
+            addons (id, name, price, duration_minutes)
+          `)
+          .eq('booking_id', id)
+        
+        console.log('Separate addons query result:', addonsData)
+        console.log('Separate addons error:', addonsError)
+        
+        if (addonsData && !addonsError) {
+          data.booking_addons = addonsData
+          console.log('Updated booking with separate addons data:', data.booking_addons)
+        }
+      } catch (separateError) {
+        console.log('Error in separate addons query:', separateError)
+      }
+      
+      // Calculate correct pricing
+      let totalCost = 0
+      let serviceDuration = 120 // default
+      
+      // Determine vehicle size
+      let vehicleSize = data.vehicles?.size || 'sedan'
+      if (!data.vehicles?.size && data.vehicles?.make && data.vehicles?.model) {
+        const make = data.vehicles.make.toLowerCase()
+        const model = data.vehicles.model.toLowerCase()
+        
+        const suvModels = ['enclave', 'traverse', 'tahoe', 'suburban', 'yukon', 'escalade', 'explorer', 'expedition', 'navigator', 'durango', 'highlander', '4runner', 'pilot', 'passport', 'telluride', 'palisade', 'sorento', 'sportage', 'tucson', 'santa fe', 'rogue', 'murano', 'pathfinder', 'armada', 'qx60', 'qx80', 'mdx', 'rdx', 'xt5', 'xt6']
+        const truckModels = ['f-150', 'silverado', 'sierra', 'ram', 'tundra', 'tacoma', 'frontier', 'colorado', 'ranger', 'maverick']
+        
+        if (suvModels.some(suv => model.includes(suv)) || 
+            make.includes('buick') && model.includes('enclave')) {
+          vehicleSize = 'suv'
+        } else if (truckModels.some(truck => model.includes(truck))) {
+          vehicleSize = 'truck'
+        }
+      }
+      
+      // Calculate service price
+      if (data.services) {
+        if (vehicleSize === 'suv') {
+          totalCost += parseFloat(data.services.base_price_suv || 0)
+        } else if (vehicleSize === 'truck') {
+          totalCost += parseFloat(data.services.base_price_truck || 0)
+        } else {
+          totalCost += parseFloat(data.services.base_price_sedan || 0)
+        }
+      } else {
+        // Fallback pricing
+        const servicePrices = {
+          'exterior': { sedan: 100, suv: 120, truck: 140 },
+          'interior': { sedan: 80, suv: 100, truck: 120 },
+          'full': { sedan: 150, suv: 180, truck: 210 }, // Changed from 'full_detail' to 'full'
+          'ceramic_coating': { sedan: 300, suv: 400, truck: 500 }
+        }
+        const serviceType = data.service_type === 'full_detail' ? 'full' : (data.service_type || 'exterior')
+        totalCost = servicePrices[serviceType]?.[vehicleSize] || 100
+      }
+      
+      // Add addon prices and durations
+      if (data.booking_addons && data.booking_addons.length > 0) {
+        data.booking_addons.forEach(ba => {
+          if (ba.addons) {
+            totalCost += parseFloat(ba.addons.price || 0)
+            serviceDuration += parseInt(ba.addons.duration_minutes || 0)
+          }
+        })
+      }
+      
+      // Update booking with calculated values
+      data.calculated_total = totalCost
+      data.calculated_duration = serviceDuration
+      
+      console.log('Booking details loaded:', data)
+      console.log('Calculated total:', totalCost)
+      console.log('Calculated duration:', serviceDuration)
+      
       setBooking(data)
       
       // Load timeline events
@@ -333,7 +425,7 @@ function BookingDetail() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-light-gray">Duration:</span>
-                    <span className="text-light-gray">{booking.estimated_duration || 120} minutes</span>
+                    <span className="text-light-gray">{booking.calculated_duration || 120} minutes</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-light-gray">Date:</span>
@@ -354,19 +446,35 @@ function BookingDetail() {
                   <DollarSign className="text-electric-blue mr-2" size={20} />
                   Pricing
                 </h3>
+                
+                {/* Add-ons Section */}
+                {booking.booking_addons && booking.booking_addons.length > 0 && (
+                  <div className="mb-4 p-3 bg-navy-dark/30 rounded-lg">
+                    <h4 className="text-sm font-semibold text-light-gray mb-2">Add-ons</h4>
+                    <div className="space-y-1">
+                      {booking.booking_addons.map((ba, index) => (
+                        <div key={index} className="flex justify-between text-sm">
+                          <span className="text-light-gray/80">{ba.addons?.name}</span>
+                          <span className="text-electric-blue">${parseFloat(ba.addons?.price || 0).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-light-gray">Subtotal:</span>
-                    <span className="text-light-gray">${booking.subtotal || '0.00'}</span>
+                    <span className="text-light-gray">${booking.subtotal?.toFixed(2) || booking.calculated_total?.toFixed(2) || '0.00'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-light-gray">Tax:</span>
-                    <span className="text-light-gray">${booking.tax_amount || '0.00'}</span>
+                    <span className="text-light-gray">Tax (6.875%):</span>
+                    <span className="text-light-gray">${booking.tax?.toFixed(2) || '0.00'}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-light-gray">Total:</span>
                     <span className="text-xl font-bold text-green-400">
-                      ${booking.total_cost?.toFixed(2) || '0.00'}
+                      ${booking.total?.toFixed(2) || booking.calculated_total?.toFixed(2) || '0.00'}
                     </span>
                   </div>
                 </div>

@@ -5,8 +5,14 @@ export const useAuthStore = create((set, get) => ({
   user: null,
   profile: null,
   loading: true,
+  initialized: false,
 
   initialize: async () => {
+    // Only initialize once
+    if (get().initialized) {
+      return
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession()
       
@@ -24,10 +30,10 @@ export const useAuthStore = create((set, get) => ({
           console.log('Profile loaded:', profile)
         }
         
-        set({ user: session.user, profile, loading: false })
+        set({ user: session.user, profile, loading: false, initialized: true })
       } else {
         console.log('No session found')
-        set({ user: null, profile: null, loading: false })
+        set({ user: null, profile: null, loading: false, initialized: true })
       }
 
       supabase.auth.onAuthStateChange(async (event, session) => {
@@ -45,14 +51,14 @@ export const useAuthStore = create((set, get) => ({
             console.log('Profile loaded on auth change:', profile)
           }
           
-          set({ user: session.user, profile })
+          set({ user: session.user, profile, loading: false })
         } else {
-          set({ user: null, profile: null })
+          set({ user: null, profile: null, loading: false })
         }
       })
     } catch (error) {
       console.error('Auth initialization error:', error)
-      set({ loading: false })
+      set({ loading: false, initialized: true })
     }
   },
 

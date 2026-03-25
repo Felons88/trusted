@@ -86,6 +86,7 @@ function Dashboard() {
 
   const statCards = [
     {
+      id: 'total-bookings',
       title: 'Total Bookings',
       value: stats.totalBookings,
       icon: Calendar,
@@ -93,6 +94,7 @@ function Dashboard() {
       link: '/admin/bookings',
     },
     {
+      id: 'pending-bookings',
       title: 'Pending Bookings',
       value: stats.pendingBookings,
       icon: Clock,
@@ -100,6 +102,7 @@ function Dashboard() {
       link: '/admin/bookings?status=pending',
     },
     {
+      id: 'total-revenue',
       title: 'Total Revenue',
       value: `$${stats.totalRevenue.toFixed(2)}`,
       icon: DollarSign,
@@ -107,6 +110,7 @@ function Dashboard() {
       link: '/admin/payments',
     },
     {
+      id: 'outstanding-invoices',
       title: 'Outstanding Invoices',
       value: `$${stats.pendingRevenue.toFixed(2)}`,
       icon: AlertCircle,
@@ -114,6 +118,7 @@ function Dashboard() {
       link: '/admin/invoices?status=pending',
     },
     {
+      id: 'total-clients',
       title: 'Total Clients',
       value: stats.totalClients,
       icon: Users,
@@ -121,6 +126,7 @@ function Dashboard() {
       link: '/admin/clients',
     },
     {
+      id: 'completed-bookings',
       title: 'Completed',
       value: stats.completedBookings,
       icon: CheckCircle,
@@ -128,6 +134,7 @@ function Dashboard() {
       link: '/admin/bookings?status=completed',
     },
     {
+      id: 'new-quotes',
       title: 'New Quotes',
       value: stats.newQuotes,
       icon: AlertCircle,
@@ -148,11 +155,11 @@ function Dashboard() {
     <div className="space-y-4 sm:space-y-6">
       {/* Stats Grid - Mobile Responsive */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {statCards.map((stat, index) => {
+        {statCards.map((stat) => {
           const Icon = stat.icon
           return (
             <Link
-              key={index}
+              key={stat.id}
               to={stat.link}
               className="glass-card p-4 sm:p-6 hover:scale-105 transition-all duration-200"
             >
@@ -173,9 +180,9 @@ function Dashboard() {
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
         {/* Recent Bookings */}
         <div className="xl:col-span-2">
-          <div className="glass-card">
+          <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-              <h2 className="text-lg sm:text-xl font-bold metallic-heading">Recent Bookings</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-white">Recent Bookings</h2>
               <Link
                 to="/admin/bookings"
                 className="text-electric-blue hover:text-blue-400 text-sm"
@@ -221,8 +228,8 @@ function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="glass-card">
-          <h2 className="text-lg sm:text-2xl font-bold metallic-heading mb-4 sm:mb-6">Quick Actions</h2>
+        <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
+          <h2 className="text-lg sm:text-2xl font-bold text-white mb-4 sm:mb-6">Quick Actions</h2>
           <div className="space-y-3 sm:space-y-4">
             <Link
               to="/admin/bookings/new"

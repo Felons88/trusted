@@ -4,6 +4,8 @@ import { Toaster } from 'react-hot-toast'
 import { useAuthStore } from './store/authStore'
 import Navigation from './components/Navigation'
 import FloatingCallButton from './components/FloatingCallButton'
+import OutstandingInvoiceAlert from './components/OutstandingInvoiceAlert'
+import AnalyticsTracker from './components/AnalyticsTracker'
 import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute'
 import { SettingsProvider } from './contexts/SettingsContext'
 import { Analytics } from '@vercel/analytics/react'
@@ -28,6 +30,8 @@ import Bookings from './pages/admin/Bookings'
 import BookingDetail from './pages/admin/BookingDetail'
 import BookingEdit from './pages/admin/BookingEdit'
 import Clients from './pages/admin/Clients'
+import ClientNewBooking from './pages/client/ClientNewBooking'
+import ClientBookings from './pages/client/ClientBookings'
 import NewBooking from './pages/admin/NewBooking'
 import NewClient from './pages/admin/NewClient'
 import Vehicles from './pages/admin/Vehicles'
@@ -49,12 +53,16 @@ import Invoices from './pages/admin/Invoices'
 import NewInvoice from './pages/admin/NewInvoice'
 import InvoicePayment from './pages/admin/InvoicePayment'
 import Payments from './pages/admin/Payments'
+import PaymentDetail from './pages/admin/PaymentDetail'
 import Messages from './pages/admin/Messages'
 import Settings from './pages/admin/Settings'
+import AdminAnalytics from './pages/admin/Analytics'
 import Payment from './pages/Payment'
 import Success from './pages/Success'
+import Receipt from './pages/Receipt'
 
 import ClientPortal from './pages/client/ClientPortal'
+import ClientInvoices from './pages/client/ClientInvoices'
 import ClientVehicles from './pages/client/Vehicles'
 import AddVehicle from './pages/client/AddVehicle'
 import VehicleDetail from './pages/client/VehicleDetail'
@@ -73,8 +81,10 @@ function App() {
   return (
     <SettingsProvider>
       <Router>
+        <AnalyticsTracker />
         <div className="min-h-screen bg-navy-gradient">
-        <Toaster
+          <OutstandingInvoiceAlert />
+          <Toaster
           position="top-right"
           toastOptions={{
             duration: 4000,
@@ -143,17 +153,25 @@ function App() {
             <Route path="invoices/new" element={<NewInvoice />} />
             <Route path="invoices" element={<Invoices />} />
             <Route path="payments" element={<Payments />} />
+            <Route path="payments/:id" element={<PaymentDetail />} />
             <Route path="messages" element={<Messages />} />
+            <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 
           <Route path="/payment/:id" element={<Payment />} />
           <Route path="/success" element={<Success />} />
+          <Route path="/receipt/:invoiceId" element={<Receipt />} />
           <Route path="/invoice-payment/:id" element={<InvoicePayment />} />
 
           <Route path="/client-portal" element={
             <ProtectedRoute>
               <ClientPortal />
+            </ProtectedRoute>
+          } />
+          <Route path="/client-portal/invoices" element={
+            <ProtectedRoute>
+              <ClientInvoices />
             </ProtectedRoute>
           } />
           <Route path="/client-portal/vehicles" element={
@@ -181,9 +199,19 @@ function App() {
               <ClientSettings />
             </ProtectedRoute>
           } />
+          <Route path="/client-portal/bookings" element={
+            <ProtectedRoute>
+              <ClientBookings />
+            </ProtectedRoute>
+          } />
           <Route path="/client-portal/bookings/:id" element={
             <ProtectedRoute>
               <ClientBookingDetail />
+            </ProtectedRoute>
+          } />
+          <Route path="/client-portal/bookings/new" element={
+            <ProtectedRoute>
+              <ClientNewBooking />
             </ProtectedRoute>
           } />
 

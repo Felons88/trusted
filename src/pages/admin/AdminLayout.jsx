@@ -46,58 +46,44 @@ function AdminLayout() {
     { icon: FileText, label: 'Quote Requests', path: '/admin/quote-requests' },
     { icon: MessageSquare, label: 'Messages', path: '/admin/messages' },
     { icon: Star, label: 'Reviews', path: '/admin/reviews' },
+    { icon: TrendingUp, label: 'Analytics', path: '/admin/analytics' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      {/* Header */}
-      <div className="bg-white/10 backdrop-blur-md border-b border-white/20 sticky top-0 z-30">
-        <div className="px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              {/* Mobile Menu Toggle */}
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="text-white hover:text-blue-400 transition-colors p-1"
-              >
-                {sidebarOpen ? <X size={20} sm:size={24} /> : <Menu size={20} sm:size={24} />}
-              </button>
-              
-              {/* Logo */}
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                  <Shield className="text-white" size={12} sm:size={16} />
-                </div>
-                <div className="hidden sm:block">
-                  <h1 className="text-lg sm:text-xl font-bold text-white">Trusted Detailing</h1>
-                </div>
-                <div className="sm:hidden">
-                  <h1 className="text-lg font-bold text-white">TD</h1>
-                </div>
-              </div>
-            </div>
-
-            {/* User Menu - Simplified */}
-            <div className="flex items-center">
-              <button
-                onClick={handleLogout}
-                className="text-white hover:text-red-400 transition-colors p-2"
-                title="Logout"
-              >
-                <LogOut size={20} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Floating Mobile Menu Button */}
+      <button
+        onClick={() => setSidebarOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-40 p-3 bg-electric-blue hover:bg-electric-blue/90 rounded-lg text-white shadow-lg transition-colors"
+      >
+        <Menu size={20} />
+      </button>
 
       <div className="flex">
         {/* Sidebar */}
-        <div className={`fixed lg:static inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
+        <div className={`fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
-          <div className="w-64 sm:w-72 lg:w-64 bg-white/10 backdrop-blur-md border-r border-white/20 h-screen lg:h-screen overflow-hidden flex flex-col">
+          <div className="w-64 sm:w-72 lg:w-64 bg-white/10 backdrop-blur-md border-r border-white/20 h-screen overflow-hidden flex flex-col">
+            {/* Mobile Menu Toggle - Top of sidebar */}
+            <div className="lg:hidden p-3 border-b border-white/10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <Shield className="text-white" size={12} />
+                  </div>
+                  <span className="text-white font-bold text-sm">Admin</span>
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="text-white hover:text-blue-400 transition-colors p-1"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </div>
+            
             {/* Navigation */}
             <nav className="flex-1 p-2 sm:p-3 overflow-y-auto">
               <ul className="space-y-1 sm:space-y-2 pb-4">
@@ -129,7 +115,7 @@ function AdminLayout() {
                 <Activity className="text-blue-400" size={14} sm:size={16} />
                 <span className="text-white font-semibold text-xs sm:text-sm">Quick Stats</span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="grid grid-cols-2 gap-2 text-xs mb-3">
                 <div className="text-white/80">
                   <p className="text-blue-200 text-xs">Status</p>
                   <p className="text-white font-bold text-xs">Active</p>
@@ -139,6 +125,15 @@ function AdminLayout() {
                   <p className="text-white font-bold text-xs">Admin</p>
                 </div>
               </div>
+              
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/30 rounded-lg transition-all duration-200 group"
+              >
+                <LogOut size={16} className="text-red-400 group-hover:text-red-300" />
+                <span className="text-red-400 group-hover:text-red-300 font-medium text-sm">Logout</span>
+              </button>
             </div>
           </div>
         </div>
@@ -152,21 +147,8 @@ function AdminLayout() {
         )}
 
         {/* Main Content */}
-        <div className="flex-1 lg:ml-0 min-w-0">
+        <div className="flex-1 lg:ml-64 min-w-0">
           <div className="min-h-screen">
-            {/* Page Header */}
-            <div className="bg-white/5 backdrop-blur-md border-b border-white/20">
-              <div className="px-3 sm:px-4 lg:px-6 py-2 sm:py-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h1 className="text-lg sm:text-2xl font-bold text-white capitalize">
-                      {menuItems.find(item => location.pathname === item.path)?.label || 'Dashboard'}
-                    </h1>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             {/* Page Content */}
             <main className="p-3 sm:p-4 lg:p-6">
               <Outlet />

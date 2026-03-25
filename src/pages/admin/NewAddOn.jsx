@@ -21,9 +21,22 @@ function NewAddOn() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
+    
+    // Handle number inputs properly for mobile
+    let processedValue = value
+    if (type === 'number' || (name.includes('price') || name.includes('duration'))) {
+      // Allow empty values and valid numbers only
+      if (value === '' || value === null || value === undefined) {
+        processedValue = ''
+      } else {
+        const numValue = parseFloat(value)
+        processedValue = isNaN(numValue) ? '' : value
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : processedValue
     }))
   }
 
@@ -162,12 +175,12 @@ function NewAddOn() {
                   Sedan Price
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="base_price_sedan"
                   value={formData.base_price_sedan}
                   onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
                   placeholder="0.00"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
                 />
@@ -178,12 +191,12 @@ function NewAddOn() {
                   SUV Price
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="base_price_suv"
                   value={formData.base_price_suv}
                   onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
                   placeholder="0.00"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
                 />
@@ -194,12 +207,12 @@ function NewAddOn() {
                   Truck Price
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="base_price_truck"
                   value={formData.base_price_truck}
                   onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
                   placeholder="0.00"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
                 />
@@ -210,12 +223,12 @@ function NewAddOn() {
                   Van Price
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="base_price_van"
                   value={formData.base_price_van}
                   onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
                   placeholder="0.00"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
                 />
@@ -239,13 +252,12 @@ function NewAddOn() {
                 Duration (minutes)
               </label>
               <input
-                type="number"
+                type="text"
                 name="duration_minutes"
                 value={formData.duration_minutes}
                 onChange={handleInputChange}
-                min="15"
-                max="240"
-                step="15"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
               />
             </div>

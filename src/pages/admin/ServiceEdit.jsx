@@ -55,16 +55,12 @@ function ServiceEdit() {
   }
 
   const handlePriceChange = (field, value) => {
+    // Allow empty values or valid decimal numbers
     if (value === '' || value === null || value === undefined) {
-      // Allow empty values (user is clearing the field)
       setFormData(prev => ({ ...prev, [field]: '' }))
-    } else {
-      // Convert to number, but don't default to 0 if invalid
-      const numValue = parseFloat(value)
-      if (!isNaN(numValue) && numValue >= 0) {
-        setFormData(prev => ({ ...prev, [field]: numValue }))
-      }
-      // If invalid, don't update (keep current value)
+    } else if (/^\d*\.?\d*$/.test(value)) {
+      // Only allow valid decimal format (no letters or special chars except decimal)
+      setFormData(prev => ({ ...prev, [field]: value }))
     }
   }
 
@@ -85,10 +81,10 @@ function ServiceEdit() {
           name: formData.name,
           description: formData.description,
           type: formData.type,
-          base_price_sedan: formData.base_price_sedan === '' ? 0 : formData.base_price_sedan,
-          base_price_suv: formData.base_price_suv === '' ? 0 : formData.base_price_suv,
-          base_price_truck: formData.base_price_truck === '' ? 0 : formData.base_price_truck,
-          base_price_van: formData.base_price_van === '' ? 0 : formData.base_price_van,
+          base_price_sedan: formData.base_price_sedan === '' ? 0 : parseFloat(formData.base_price_sedan),
+          base_price_suv: formData.base_price_suv === '' ? 0 : parseFloat(formData.base_price_suv),
+          base_price_truck: formData.base_price_truck === '' ? 0 : parseFloat(formData.base_price_truck),
+          base_price_van: formData.base_price_van === '' ? 0 : parseFloat(formData.base_price_van),
           duration_minutes: formData.duration_minutes,
           is_active: formData.is_active,
           updated_at: new Date().toISOString()
@@ -198,12 +194,11 @@ function ServiceEdit() {
                   <div>
                     <label className="text-xs text-slate-400 mb-1 block">Sedan</label>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       value={formData.base_price_sedan}
                       onChange={(e) => handlePriceChange('base_price_sedan', e.target.value)}
                       className="admin-input"
-                      min="0"
-                      step="0.01"
                       placeholder="0.00"
                       required
                     />
@@ -211,12 +206,11 @@ function ServiceEdit() {
                   <div>
                     <label className="text-xs text-slate-400 mb-1 block">SUV</label>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       value={formData.base_price_suv}
                       onChange={(e) => handlePriceChange('base_price_suv', e.target.value)}
                       className="admin-input"
-                      min="0"
-                      step="0.01"
                       placeholder="0.00"
                       required
                     />
@@ -224,12 +218,11 @@ function ServiceEdit() {
                   <div>
                     <label className="text-xs text-slate-400 mb-1 block">Truck</label>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       value={formData.base_price_truck}
                       onChange={(e) => handlePriceChange('base_price_truck', e.target.value)}
                       className="admin-input"
-                      min="0"
-                      step="0.01"
                       placeholder="0.00"
                       required
                     />
@@ -237,12 +230,11 @@ function ServiceEdit() {
                   <div>
                     <label className="text-xs text-slate-400 mb-1 block">Van</label>
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       value={formData.base_price_van}
                       onChange={(e) => handlePriceChange('base_price_van', e.target.value)}
                       className="admin-input"
-                      min="0"
-                      step="0.01"
                       placeholder="0.00"
                       required
                     />

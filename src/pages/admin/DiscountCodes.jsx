@@ -151,6 +151,7 @@ function DiscountCodes() {
   }
 
   const resetForm = () => {
+    console.log('resetForm function called!')
     setFormData({
       code: '',
       description: '',
@@ -163,6 +164,7 @@ function DiscountCodes() {
       starts_at: '',
       expires_at: ''
     })
+    console.log('Form data reset complete')
   }
 
   const filteredCodes = discountCodes.filter(code =>
@@ -200,7 +202,7 @@ function DiscountCodes() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-electric-blue"></div>
       </div>
     )
   }
@@ -210,14 +212,19 @@ function DiscountCodes() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Discount Codes</h1>
-          <p className="text-gray-600">Manage discount codes and promotions</p>
+          <h1 className="text-2xl font-bold metallic-heading">Discount Codes</h1>
+          <p className="text-light-gray">Manage discount codes and promotions</p>
         </div>
         <button
           onClick={() => {
+            console.log('Add Discount Code button clicked!')
+            console.log('Current showModal state:', showModal)
             setEditingCode(null)
+            console.log('setEditingCode(null) called')
             resetForm()
+            console.log('resetForm() called')
             setShowModal(true)
+            console.log('setShowModal(true) called')
           }}
           className="btn-primary flex items-center space-x-2"
         >
@@ -227,51 +234,51 @@ function DiscountCodes() {
       </div>
 
       {/* Search */}
-      <div className="bg-white p-4 rounded-lg shadow">
+      <div className="glass-card p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-light-gray" size={20} />
           <input
             type="text"
             placeholder="Search discount codes..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver placeholder:text-light-gray/60"
           />
         </div>
       </div>
 
       {/* Discount Codes Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="glass-card rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-navy-dark/50 border-b border-electric-blue/20">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Code</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usage</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-light-gray uppercase tracking-wider">Code</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-light-gray uppercase tracking-wider">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-light-gray uppercase tracking-wider">Discount</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-light-gray uppercase tracking-wider">Usage</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-light-gray uppercase tracking-wider">Dates</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-light-gray uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-light-gray uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-electric-blue/10">
               {filteredCodes.map((code) => (
-                <tr key={code.id} className="hover:bg-gray-50">
+                <tr key={code.id} className="hover:bg-navy-dark/30">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{code.code}</div>
+                    <div className="text-sm font-medium text-metallic-silver">{code.code}</div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{code.description || 'No description'}</div>
+                    <div className="text-sm text-light-gray">{code.description || 'No description'}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
                       {code.discount_type === 'percentage' ? (
-                        <Percent size={16} className="text-green-600" />
+                        <Percent size={16} className="text-green-400" />
                       ) : (
-                        <DollarSign size={16} className="text-blue-600" />
+                        <DollarSign size={16} className="text-electric-blue" />
                       )}
-                      <span className="text-sm text-gray-900">
+                      <span className="text-sm text-metallic-silver">
                         {code.discount_type === 'percentage' 
                           ? `${code.discount_value}%` 
                           : `$${code.discount_value}`
@@ -279,34 +286,34 @@ function DiscountCodes() {
                       </span>
                     </div>
                     {code.minimum_amount > 0 && (
-                      <div className="text-xs text-gray-500">Min: ${code.minimum_amount}</div>
+                      <div className="text-xs text-light-gray/60">Min: ${code.minimum_amount}</div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-3">
                       <div className="text-center">
-                        <div className="text-lg font-bold text-gray-900">
+                        <div className="text-lg font-bold text-metallic-silver">
                           {code.usage_count}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-light-gray/60">
                           of {code.usage_limit || '∞'}
                         </div>
                       </div>
                       {code.usage_limit && (
                         <div className="flex-1">
-                          <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div className="w-full bg-navy-dark/50 rounded-full h-3">
                             <div 
                               className={`h-3 rounded-full transition-all duration-300 ${
                                 (code.usage_count / code.usage_limit) >= 1 
-                                  ? 'bg-red-500' 
+                                  ? 'bg-red-400' 
                                   : (code.usage_count / code.usage_limit) >= 0.8 
-                                  ? 'bg-yellow-500' 
-                                  : 'bg-green-500'
+                                  ? 'bg-yellow-400' 
+                                  : 'bg-green-400'
                               }`}
                               style={{ width: `${Math.min((code.usage_count / code.usage_limit) * 100, 100)}%` }}
                             ></div>
                           </div>
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-light-gray/60 mt-1">
                             {Math.round((code.usage_count / code.usage_limit) * 100)}% used
                           </div>
                         </div>
@@ -314,13 +321,13 @@ function DiscountCodes() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-metallic-silver">
                       <div className="flex items-center space-x-1">
-                        <Calendar size={14} className="text-gray-400" />
+                        <Calendar size={14} className="text-light-gray" />
                         <span>{formatDate(code.starts_at)}</span>
                       </div>
                       <div className="flex items-center space-x-1">
-                        <Clock size={14} className="text-gray-400" />
+                        <Clock size={14} className="text-light-gray" />
                         <span>{formatDate(code.expires_at)}</span>
                       </div>
                     </div>
@@ -365,33 +372,33 @@ function DiscountCodes() {
       </div>
 
       {/* Add/Edit Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">
+      {console.log('Modal render check - showModal:', showModal) || showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass-card rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-electric-blue/20">
+            <h2 className="text-xl font-bold metallic-heading mb-4">
               {editingCode ? 'Edit Discount Code' : 'Add Discount Code'}
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Code</label>
+                  <label className="block text-sm font-medium text-light-gray mb-1">Code</label>
                   <input
                     type="text"
                     required
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="SAVE10"
+                    placeholder="DISCOUNT2024"
+                    className="w-full px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver placeholder:text-light-gray/60"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
+                  <label className="block text-sm font-medium text-light-gray mb-1">Discount Type</label>
                   <select
                     value={formData.discount_type}
                     onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver"
                   >
                     <option value="percentage">Percentage</option>
                     <option value="fixed_amount">Fixed Amount</option>
@@ -400,19 +407,19 @@ function DiscountCodes() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <label className="block text-sm font-medium text-light-gray mb-1">Description</label>
                 <input
                   type="text"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver placeholder:text-light-gray/60"
                   placeholder="Special discount for new customers"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-light-gray mb-1">
                     Discount Value ({formData.discount_type === 'percentage' ? '%' : '$'})
                   </label>
                   <input
@@ -422,20 +429,20 @@ function DiscountCodes() {
                     step={formData.discount_type === 'percentage' ? '0.01' : '0.01'}
                     value={formData.discount_value}
                     onChange={(e) => setFormData({ ...formData, discount_value: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver placeholder:text-light-gray/60"
                     placeholder={formData.discount_type === 'percentage' ? '10' : '25'}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Amount ($)</label>
+                  <label className="block text-sm font-medium text-light-gray mb-1">Minimum Amount ($)</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={formData.minimum_amount}
                     onChange={(e) => setFormData({ ...formData, minimum_amount: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver placeholder:text-light-gray/60"
                     placeholder="0"
                   />
                 </div>
@@ -443,14 +450,14 @@ function DiscountCodes() {
 
               {formData.discount_type === 'percentage' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Maximum Discount ($)</label>
+                  <label className="block text-sm font-medium text-light-gray mb-1">Maximum Discount ($)</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={formData.maximum_discount}
                     onChange={(e) => setFormData({ ...formData, maximum_discount: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver placeholder:text-light-gray/60"
                     placeholder="Leave empty for no maximum"
                   />
                 </div>
@@ -458,23 +465,23 @@ function DiscountCodes() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Usage Limit</label>
+                  <label className="block text-sm font-medium text-light-gray mb-1">Usage Limit</label>
                   <input
                     type="number"
                     min="1"
                     value={formData.usage_limit}
                     onChange={(e) => setFormData({ ...formData, usage_limit: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver placeholder:text-light-gray/60"
                     placeholder="Leave empty for unlimited"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                  <label className="block text-sm font-medium text-light-gray mb-1">Status</label>
                   <select
                     value={formData.is_active}
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.value === 'true' })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver"
                   >
                     <option value="true">Active</option>
                     <option value="false">Inactive</option>
@@ -484,22 +491,22 @@ function DiscountCodes() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                  <label className="block text-sm font-medium text-light-gray mb-1">Start Date</label>
                   <input
                     type="datetime-local"
                     value={formData.starts_at}
                     onChange={(e) => setFormData({ ...formData, starts_at: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
+                  <label className="block text-sm font-medium text-light-gray mb-1">Expiration Date</label>
                   <input
                     type="datetime-local"
                     value={formData.expires_at}
                     onChange={(e) => setFormData({ ...formData, expires_at: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg focus:ring-2 focus:ring-electric-blue/50 focus:border-electric-blue text-metallic-silver"
                   />
                 </div>
               </div>
@@ -512,7 +519,7 @@ function DiscountCodes() {
                     setEditingCode(null)
                     resetForm()
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 border border-electric-blue/20 rounded-lg text-light-gray hover:bg-navy-dark/50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -530,31 +537,31 @@ function DiscountCodes() {
 
       {/* Usage Tracking Modal */}
       {showUsageModal && selectedCodeForUsage && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="glass-card rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-electric-blue/20">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold">Usage Tracking - {selectedCodeForUsage.code}</h2>
+              <h2 className="text-xl font-bold metallic-heading">Usage Tracking - {selectedCodeForUsage.code}</h2>
               <button
                 onClick={() => {
                   setShowUsageModal(false)
                   setSelectedCodeForUsage(null)
                   setUsageData([])
                 }}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-light-gray hover:text-metallic-silver transition-colors"
               >
                 <XCircle size={24} />
               </button>
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg mb-4">
+            <div className="bg-navy-dark/30 p-4 rounded-lg mb-4 border border-electric-blue/10">
               <div className="grid grid-cols-4 gap-4 text-center">
                 <div>
-                  <p className="text-sm text-gray-600">Total Uses</p>
-                  <p className="text-2xl font-bold text-blue-600">{selectedCodeForUsage.usage_count}</p>
+                  <p className="text-sm text-light-gray">Total Uses</p>
+                  <p className="text-2xl font-bold text-electric-blue">{selectedCodeForUsage.usage_count}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Remaining</p>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-sm text-light-gray">Remaining</p>
+                  <p className="text-2xl font-bold text-green-400">
                     {selectedCodeForUsage.usage_limit ? 
                       selectedCodeForUsage.usage_limit - selectedCodeForUsage.usage_count : 
                       'Unlimited'

@@ -3,13 +3,13 @@
 
 class EmailService {
   constructor() {
-    this.smtpHost = import.meta.env.SMTP_HOST
-    this.smtpPort = import.meta.env.SMTP_PORT
-    this.smtpUser = import.meta.env.SMTP_USER
-    this.smtpPass = import.meta.env.SMTP_PASS
-    this.brevoApiKey = import.meta.env.BREVO_API_KEY
-    this.businessEmail = import.meta.env.BUSINESS_EMAIL || 'info@trustedmobiledetailing.com'
-    this.ownerEmail = import.meta.env.OWNER_EMAIL || 'owner@trustedmobiledetailing.com'
+    this.smtpHost = import.meta.env.VITE_SMTP_HOST
+    this.smtpPort = import.meta.env.VITE_SMTP_PORT
+    this.smtpUser = import.meta.env.VITE_SMTP_USER
+    this.smtpPass = import.meta.env.VITE_SMTP_PASS
+    this.brevoApiKey = import.meta.env.VITE_BREVO_API_KEY
+    this.businessEmail = import.meta.env.VITE_BUSINESS_EMAIL || 'info@trustedmobiledetailing.com'
+    this.ownerEmail = import.meta.env.VITE_OWNER_EMAIL || 'owner@trustedmobiledetailing.com'
     this.baseUrl = 'https://api.brevo.com/v3'
   }
 
@@ -208,6 +208,41 @@ class EmailService {
       return await response.json()
     } catch (error) {
       console.error('EmailService sendPromotionalEmail error:', error)
+      throw error
+    }
+  }
+
+  // Send direct email with custom HTML content
+  async sendDirectEmail({ to, subject, html }) {
+    try {
+      const response = await fetch(`${this.baseUrl}/smtp/email`, {
+        method: 'POST',
+        headers: {
+          'api-key': this.brevoApiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: {
+            name: 'Trusted Mobile Detailing',
+            email: this.businessEmail
+          },
+          to: [{ email: to }],
+          subject: subject,
+          htmlContent: html
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.text()
+        console.error('EmailService sendDirectEmail error:', errorData)
+        throw new Error(`Failed to send email: ${errorData}`)
+      }
+
+      const result = await response.json()
+      console.log('Email sent successfully:', result)
+      return result
+    } catch (error) {
+      console.error('EmailService sendDirectEmail error:', error)
       throw error
     }
   }

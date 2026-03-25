@@ -21,6 +21,29 @@ function NewService() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target
+    
+    // Handle price inputs - allow empty values and valid decimal numbers only
+    if (name.includes('price')) {
+      if (value === '' || value === null || value === undefined) {
+        setFormData(prev => ({ ...prev, [name]: '' }))
+      } else if (/^\d*\.?\d*$/.test(value)) {
+        // Only allow valid decimal format
+        setFormData(prev => ({ ...prev, [name]: value }))
+      }
+      return
+    }
+    
+    // Handle duration - allow empty or valid integers
+    if (name === 'duration_minutes') {
+      if (value === '' || value === null || value === undefined) {
+        setFormData(prev => ({ ...prev, [name]: '' }))
+      } else if (/^\d+$/.test(value)) {
+        setFormData(prev => ({ ...prev, [name]: value }))
+      }
+      return
+    }
+    
+    // Handle other inputs normally
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
@@ -159,13 +182,12 @@ function NewService() {
                 Duration (minutes)
               </label>
               <input
-                type="number"
+                type="text"
                 name="duration_minutes"
                 value={formData.duration_minutes}
                 onChange={handleInputChange}
-                min="30"
-                max="480"
-                step="30"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 placeholder="120"
                 className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
               />
@@ -179,68 +201,75 @@ function NewService() {
               Pricing
             </h2>
             
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-metallic-silver mb-2 font-semibold">
                   Sedan Price
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="base_price_sedan"
                   value={formData.base_price_sedan}
                   onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
                   placeholder="0.00"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
                 />
               </div>
+              
               <div>
                 <label className="block text-metallic-silver mb-2 font-semibold">
                   SUV Price
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="base_price_suv"
                   value={formData.base_price_suv}
                   onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
                   placeholder="0.00"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
                 />
               </div>
+              
               <div>
                 <label className="block text-metallic-silver mb-2 font-semibold">
                   Truck Price
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="base_price_truck"
                   value={formData.base_price_truck}
                   onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
                   placeholder="0.00"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
                 />
               </div>
+              
               <div>
                 <label className="block text-metallic-silver mb-2 font-semibold">
                   Van Price
                 </label>
                 <input
-                  type="number"
+                  type="text"
                   name="base_price_van"
                   value={formData.base_price_van}
                   onChange={handleInputChange}
-                  min="0"
-                  step="0.01"
+                  inputMode="decimal"
+                  pattern="[0-9]*\.?[0-9]*"
                   placeholder="0.00"
                   className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
                 />
               </div>
             </div>
+            
+            <p className="text-sm text-light-gray">
+              Set prices for all vehicle sizes. All fields are required for services.
+            </p>
           </div>
 
           {/* Status */}

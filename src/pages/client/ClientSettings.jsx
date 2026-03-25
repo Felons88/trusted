@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { useAuthStore } from '../../store/authStore-emergency'
+import { useAuthStore } from '../../store/authStore'
 import { 
   User, Settings, CreditCard, MapPin, Phone, Mail, 
   Save, ArrowLeft, Shield, Bell, LogOut, Eye, EyeOff, 
@@ -328,25 +328,25 @@ function ClientSettings() {
 
   return (
     <>
-      <div className="min-h-screen bg-navy-gradient">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
         <ClientNavigation />
-        <div className="pt-16 pb-20 px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-8">
-              <Link
-                to="/client-portal"
-                className="text-light-gray hover:text-electric-blue transition-colors flex items-center mb-4"
-              >
-                <ArrowLeft size={20} className="mr-2" />
-                Back to Dashboard
-              </Link>
-              <h1 className="text-4xl font-bold metallic-heading mb-2">Settings</h1>
-              <p className="text-light-gray">Manage your account settings and preferences</p>
-            </div>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <Link
+              to="/client-portal"
+              className="inline-flex items-center gap-2 text-light-gray hover:text-metallic-silver mb-6 transition-colors"
+            >
+              <ArrowLeft size={20} />
+              <span>Back to Dashboard</span>
+            </Link>
+            <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
+            <p className="text-light-gray">Manage your account settings and preferences</p>
+          </div>
 
-        {/* Tab Navigation */}
-        <div className="glass-card mb-8">
-          <div className="flex flex-wrap gap-2 border-b border-electric-blue/20">
+          {/* Tab Navigation */}
+          <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20 mb-8">
+            <div className="flex flex-wrap gap-2 border-b border-electric-blue/20 pb-6">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -366,92 +366,92 @@ function ClientSettings() {
 
         {/* Profile Tab */}
         {activeTab === 'profile' && (
-          <div className="glass-card">
-            <h2 className="text-2xl font-bold metallic-heading mb-6">Profile Information</h2>
+          <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
+            <h2 className="text-2xl font-bold text-white mb-6">Profile Information</h2>
             <form onSubmit={handleProfileUpdate} className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-metallic-silver mb-2 font-semibold">
+                  <label className="block text-sm font-medium text-light-gray mb-2">
                     Full Name
                   </label>
                   <input
                     type="text"
                     value={profileData.full_name}
                     onChange={(e) => setProfileData(prev => ({ ...prev, full_name: e.target.value }))}
-                    className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                    className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-metallic-silver mb-2 font-semibold">
+                  <label className="block text-sm font-medium text-light-gray mb-2">
                     Email Address
                   </label>
                   <input
                     type="email"
                     value={profileData.email}
                     disabled
-                    className="w-full bg-navy-dark/50 border border-electric-blue/20 rounded-lg px-4 py-3 text-light-gray cursor-not-allowed"
+                    className="w-full px-4 py-3 bg-navy-dark/50 border border-electric-blue/20 rounded-lg text-light-gray cursor-not-allowed"
                   />
                   <p className="text-xs text-light-gray/60 mt-1">Contact support to change email</p>
                 </div>
 
                 <div>
-                  <label className="block text-metallic-silver mb-2 font-semibold">
+                  <label className="block text-sm font-medium text-light-gray mb-2">
                     Phone Number
                   </label>
                   <input
                     type="tel"
                     value={profileData.phone}
                     onChange={(e) => setProfileData(prev => ({ ...prev, phone: e.target.value }))}
-                    className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                    className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-metallic-silver mb-2 font-semibold">
+                  <label className="block text-sm font-medium text-light-gray mb-2">
                     Address
                   </label>
                   <input
                     type="text"
                     value={profileData.address}
                     onChange={(e) => setProfileData(prev => ({ ...prev, address: e.target.value }))}
-                    className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                    className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-metallic-silver mb-2 font-semibold">
+                  <label className="block text-sm font-medium text-light-gray mb-2">
                     City
                   </label>
                   <input
                     type="text"
                     value={profileData.city}
                     onChange={(e) => setProfileData(prev => ({ ...prev, city: e.target.value }))}
-                    className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                    className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-metallic-silver mb-2 font-semibold">
+                    <label className="block text-sm font-medium text-light-gray mb-2">
                       State
                     </label>
                     <input
                       type="text"
                       value={profileData.state}
                       onChange={(e) => setProfileData(prev => ({ ...prev, state: e.target.value }))}
-                      className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                      className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                     />
                   </div>
                   <div>
-                    <label className="block text-metallic-silver mb-2 font-semibold">
+                    <label className="block text-sm font-medium text-light-gray mb-2">
                       ZIP Code
                     </label>
                     <input
                       type="text"
                       value={profileData.zip_code}
                       onChange={(e) => setProfileData(prev => ({ ...prev, zip_code: e.target.value }))}
-                      className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                      className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                     />
                   </div>
                 </div>
@@ -461,7 +461,7 @@ function ClientSettings() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary shine-effect flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-electric-blue hover:bg-electric-blue/90 rounded-lg text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save size={20} className="inline mr-2" />
                   {loading ? 'Saving...' : 'Save Changes'}
@@ -469,7 +469,7 @@ function ClientSettings() {
                 <button
                   type="button"
                   onClick={loadClientData}
-                  className="btn-secondary flex-1"
+                  className="flex-1 px-6 py-3 bg-navy-dark hover:bg-navy-dark/70 rounded-lg text-white font-semibold transition-colors"
                 >
                   Cancel
                 </button>
@@ -481,8 +481,8 @@ function ClientSettings() {
         {/* Payment Methods Tab */}
         {activeTab === 'payment' && (
           <div className="space-y-8">
-            <div className="glass-card">
-              <h2 className="text-2xl font-bold metallic-heading mb-6">Payment Methods</h2>
+            <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
+              <h2 className="text-2xl font-bold text-white mb-6">Payment Methods</h2>
               
               {paymentMethods.length === 0 ? (
                 <div className="text-center py-8">
@@ -621,7 +621,7 @@ function ClientSettings() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-primary shine-effect w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-6 py-3 bg-electric-blue hover:bg-electric-blue/90 rounded-lg text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <CreditCard size={20} className="inline mr-2" />
                   {loading ? 'Adding...' : 'Add Payment Method'}
@@ -633,8 +633,8 @@ function ClientSettings() {
 
         {/* Notifications Tab */}
         {activeTab === 'notifications' && (
-          <div className="glass-card">
-            <h2 className="text-2xl font-bold metallic-heading mb-6">Notification Preferences</h2>
+          <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
+            <h2 className="text-2xl font-bold text-white mb-6">Notification Preferences</h2>
             <div className="space-y-4">
               <div className="flex justify-between items-center p-4 bg-navy-dark/50 border border-electric-blue/20 rounded-lg">
                 <div>
@@ -754,7 +754,7 @@ function ClientSettings() {
                   <button
                     type="submit"
                     disabled={loadingStates.password}
-                    className="btn-primary shine-effect flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-electric-blue hover:bg-electric-blue/90 rounded-lg text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Save size={20} className="inline mr-2" />
                     {loadingStates.password ? 'Updating...' : 'Update Password'}
@@ -773,7 +773,7 @@ function ClientSettings() {
                         confirm: false
                       })
                     }}
-                    className="btn-secondary flex-1"
+                    className="flex-1 px-6 py-3 bg-navy-dark hover:bg-navy-dark/70 rounded-lg text-white font-semibold transition-colors"
                   >
                     Cancel
                   </button>
@@ -786,8 +786,8 @@ function ClientSettings() {
         {/* Security Tab */}
         {activeTab === 'security' && (
           <div className="space-y-8">
-            <div className="glass-card">
-              <h2 className="text-2xl font-bold metallic-heading mb-6">Two-Factor Authentication</h2>
+            <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
+              <h2 className="text-2xl font-bold text-white mb-6">Two-Factor Authentication</h2>
               
               {twoFactorEnabled ? (
                 <div className="space-y-4">
@@ -827,7 +827,7 @@ function ClientSettings() {
                   <button
                     onClick={handleEnable2FA}
                     disabled={loadingStates.twoFactor}
-                    className="btn-primary shine-effect disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-3 bg-electric-blue hover:bg-electric-blue/90 rounded-lg text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Smartphone size={20} className="inline mr-2" />
                     {loadingStates.twoFactor ? 'Enabling...' : 'Enable 2FA'}
@@ -836,8 +836,8 @@ function ClientSettings() {
               )}
             </div>
 
-            <div className="glass-card">
-              <h2 className="text-2xl font-bold metallic-heading mb-6">Danger Zone</h2>
+            <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
+              <h2 className="text-2xl font-bold text-white mb-6">Danger Zone</h2>
               <div className="space-y-4">
                 <button
                   onClick={handleSignOut}
@@ -855,7 +855,6 @@ function ClientSettings() {
             </div>
           </div>
         )}
-      </div>
         </div>
       </div>
 

@@ -1,6 +1,8 @@
 // Stripe Payment Service
 // Handles payment processing, refunds, and webhooks
 
+import { supabase } from '../lib/supabase'
+
 class StripeService {
   constructor() {
     this.publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -31,26 +33,24 @@ class StripeService {
   // Create payment intent for booking
   async createPaymentIntent(amount, bookingId, customerEmail) {
     try {
-      const response = await fetch('/api/stripe/create-payment-intent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Use Supabase function instead of API endpoint
+      const { data, error } = await supabase.functions.invoke('create-payment-intent', {
+        body: {
           amount: Math.round(amount * 100), // Convert to cents
           currency: 'usd',
           metadata: {
             bookingId,
             customerEmail
           }
-        })
+        }
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to create payment intent')
+      if (error) {
+        console.error('Supabase function error:', error)
+        throw new Error(error.message || 'Failed to create payment intent')
       }
 
-      return await response.json()
+      return data
     } catch (error) {
       console.error('Stripe createPaymentIntent error:', error)
       throw error
@@ -100,23 +100,19 @@ class StripeService {
   // Process refund
   async processRefund(paymentIntentId, amount, reason) {
     try {
-      const response = await fetch('/api/stripe/refund', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('process-refund', {
+        body: {
           paymentIntentId,
           amount: amount ? Math.round(amount * 100) : undefined,
           reason: reason || 'requested_by_customer'
-        })
+        }
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to process refund')
+      if (error) {
+        throw new Error(error.message || 'Failed to process refund')
       }
 
-      return await response.json()
+      return data
     } catch (error) {
       console.error('Stripe refund error:', error)
       throw error
@@ -126,13 +122,17 @@ class StripeService {
   // Get payment status
   async getPaymentStatus(paymentIntentId) {
     try {
-      const response = await fetch(`/api/stripe/payment-status/${paymentIntentId}`)
+      const { data, error } = await supabase.functions.invoke('get-payment-status', {
+        body: {
+          paymentIntentId
+        }
+      })
       
-      if (!response.ok) {
-        throw new Error('Failed to get payment status')
+      if (error) {
+        throw new Error(error.message || 'Failed to get payment status')
       }
 
-      return await response.json()
+      return data
     } catch (error) {
       console.error('Stripe getPaymentStatus error:', error)
       throw error
@@ -142,23 +142,19 @@ class StripeService {
   // Create customer
   async createCustomer(email, name, phone) {
     try {
-      const response = await fetch('/api/stripe/create-customer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('create-customer', {
+        body: {
           email,
           name,
           phone
-        })
+        }
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to create customer')
+      if (error) {
+        throw new Error(error.message || 'Failed to create customer')
       }
 
-      return await response.json()
+      return data
     } catch (error) {
       console.error('Stripe createCustomer error:', error)
       throw error
@@ -168,23 +164,19 @@ class StripeService {
   // Setup recurring payment for subscription plans
   async setupSubscription(customerId, priceId, paymentMethodId) {
     try {
-      const response = await fetch('/api/stripe/create-subscription', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { data, error } = await supabase.functions.invoke('create-subscription', {
+        body: {
           customerId,
           priceId,
           paymentMethodId
-        })
+        }
       })
 
-      if (!response.ok) {
-        throw new Error('Failed to create subscription')
+      if (error) {
+        throw new Error(error.message || 'Failed to create subscription')
       }
 
-      return await response.json()
+      return data
     } catch (error) {
       console.error('Stripe setupSubscription error:', error)
       throw error

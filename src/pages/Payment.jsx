@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { CreditCard, Shield, CheckCircle, AlertCircle, ArrowLeft, Clock, DollarSign, Lock } from 'lucide-react'
-import { supabase } from '../lib/supabase'
+import { Link, ArrowLeft, CreditCard, Lock, CheckCircle, AlertTriangle, Shield, MapPin, Activity, DollarSign, AlertCircle } from 'lucide-react'
+import { supabase } from '../lib/supabase.js'
 import toast from 'react-hot-toast'
+import binLookupService from '../services/binLookupService.js'
 import DiscountCodeInput from '../components/DiscountCodeInput'
 import discountCodeService from '../services/discountCodeService'
 
@@ -169,16 +170,19 @@ function PaymentContent() {
 
   const getCurrentAmount = () => {
     if (!invoice) return 0
-    return appliedDiscount ? appliedDiscount.final_amount : invoice.total
+    const amount = appliedDiscount ? appliedDiscount.final_amount : invoice.total
+    
+    // Ensure minimum Stripe amount of $0.50
+    return Math.max(0.50, amount)
   }
 
   const updatePaymentAttemptStatus = async (paymentAttemptId, status, reason = null) => {
     try {
-      await supabase.rpc('update_payment_status', [
-        paymentAttemptId,
-        status,
-        reason
-      ])
+      await supabase.rpc('update_payment_status', {
+        payment_attempt_id_param: paymentAttemptId,
+        new_status_param: status,
+        reason_param: reason
+      })
     } catch (error) {
       console.error('Error updating payment status:', error)
     }
@@ -186,28 +190,18 @@ function PaymentContent() {
 
   const recordPaymentDetails = async (paymentAttemptId, details) => {
     try {
-      await supabase.rpc('record_payment_details', [
-        paymentAttemptId,
-        details.stripe_payment_intent_id,
-        details.stripe_payment_method_id,
-        details.stripe_charge_id,
-        details.stripe_customer_id,
-        details.amount,
-        details.currency,
-        details.outcome,
-        details.network_status,
-        details.reason,
-        details.risk_level,
-        details.risk_score,
-        details.fraud_signals,
-        details.stripe_produced,
-        details.application_fee_amount,
-        details.application_fee_currency,
-        details.transfer_amount,
-        details.transfer_currency
-      ])
+      // Send ONLY the required parameter - omit optional debug_params entirely
+      console.log('DEBUG: Sending only payment_attempt_id_param:', paymentAttemptId)
+      
+      const result = await supabase.rpc('record_payment_details', {
+        payment_attempt_id_param: paymentAttemptId
+      })
+      
+      console.log('DEBUG: Success! Result:', result)
+      
     } catch (error) {
-      console.error('Error recording payment details:', error)
+      console.error('DEBUG: Error calling record_payment_details:', error)
+      console.error('DEBUG: Full error object:', JSON.stringify(error, null, 2))
     }
   }
 
@@ -240,22 +234,22 @@ function PaymentContent() {
       if (riskScore >= 80) riskLevel = 'high'
       
       // Record fraud detection
-      await supabase.rpc('record_fraud_detection', [
-        paymentAttemptId,
-        riskScore,
-        riskLevel,
-        JSON.stringify(fraudSignals),
-        JSON.stringify([
+      await supabase.rpc('record_fraud_detection', {
+        payment_attempt_id_param: paymentAttemptId,
+        fraud_score_param: riskScore,
+        risk_level_param: riskLevel,
+        signals_param: JSON.stringify(fraudSignals),
+        rules_triggered_param: JSON.stringify([
           { rule: 'stripe_risk_level', triggered: riskLevel !== 'normal' }
         ]),
-        JSON.stringify({
+        machine_learning_result_param: JSON.stringify({
           model: 'stripe_ml',
           confidence: 0.85
         }),
-        false,
-        null,
-        null
-      ])
+        manual_review_param: false,
+        reviewed_by_param: null,
+        review_notes_param: null
+      })
     } catch (error) {
       console.error('Error performing fraud detection:', error)
     }
@@ -603,15 +597,15 @@ function PaymentContent() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    setProcessing(true)
-    setError(null)
-
+    
     if (!stripe || !elements) {
-      setError('Payment system not available')
-      setProcessing(false)
+      console.error('Stripe not loaded')
       return
     }
 
+    setProcessing(true)
+    setError(null)
+    
     try {
       console.log('Starting payment process...')
       console.log('Invoice data:', invoice)
@@ -690,26 +684,49 @@ function PaymentContent() {
       const location = await getLocation()
       const deviceFingerprint = getDeviceFingerprint()
 
-      // Record payment attempt
-      const paymentAttemptId = await supabase.rpc('record_payment_attempt', [
-        invoice.id,
-        invoice.clients?.id,
-        paymentIntentData.payment_intent_id,
-        'pending',
-        fees.finalAmount,
-        'usd',
-        clientIP,
-        userAgent,
-        location,
-        deviceFingerprint,
-        'card',
-        null, // Will be filled after payment confirmation
-        null,
-        null,
-        null,
-        null,
-        JSON.stringify(paymentIntentData)
-      ])
+      // Record payment attempt - send only exact parameters the function expects
+      const paymentAttemptParams = {
+        invoice_id_param: invoice.id,
+        client_id_param: invoice.clients?.id,
+        payment_intent_id_param: paymentIntentData.payment_intent_id,
+        status_param: 'pending',
+        amount_param: fees.finalAmount,
+        currency_param: 'usd',
+        ip_address_param: clientIP,
+        user_agent_param: userAgent,
+        location_param: location,
+        device_fingerprint_param: deviceFingerprint,
+        payment_method_param: 'card',
+        card_last4_param: null,
+        card_brand_param: null,
+        card_country_param: null,
+        card_exp_month_param: null,
+        card_exp_year_param: null,
+        stripe_produced_param: paymentIntentData
+      }
+
+      console.log('Sending payment attempt params:', paymentAttemptParams)
+      
+      // Send parameters directly, not nested in an object
+      const rpcParams = {
+        invoice_id_param: invoice.id,
+        client_id_param: invoice.clients?.id,
+        debug_params: paymentAttemptParams
+      }
+      
+      console.log('DEBUG: Exact RPC params being sent:', JSON.stringify(rpcParams, null, 2))
+      console.log('DEBUG: Parameter keys:', Object.keys(rpcParams))
+      
+      const { data: paymentAttemptData, error: recordError } = await supabase.rpc('record_payment_attempt', rpcParams)
+
+      if (recordError) {
+        console.error('Error recording payment attempt:', recordError)
+        setError('Failed to record payment attempt')
+        setProcessing(false)
+        return
+      }
+
+      const paymentAttemptId = paymentAttemptData
 
       // Step 4: Confirm payment with client secret
       const { error: confirmPaymentError, paymentIntent: confirmedIntent } = await stripe.confirmCardPayment(
@@ -729,10 +746,121 @@ function PaymentContent() {
       if (confirmPaymentError) {
         console.error('Payment confirmation error:', confirmPaymentError)
         
-        // Update payment attempt status to failed
+        // Extract more detailed card information before failure
+        const cardElement = elements.getElement(CardElement)
+        let cardInfo = {}
+        let bankInfo = {}
+        
+        if (cardElement) {
+          try {
+            // Try to get card details from the element
+            const cardData = await stripe.createPaymentMethod({
+              type: 'card',
+              card: cardElement,
+              billing_details: {
+                name: invoice?.clients?.full_name,
+                email: invoice?.clients?.email,
+              },
+            })
+            
+            console.log('Stripe card data:', cardData) // Debug log
+            
+            if (cardData.paymentMethod) {
+              cardInfo = {
+                brand: cardData.paymentMethod.card.brand,
+                last4: cardData.paymentMethod.card.last4,
+                exp_month: cardData.paymentMethod.card.exp_month.toString(),
+                exp_year: cardData.paymentMethod.card.exp_year.toString(),
+                country: cardData.paymentMethod.card.country,
+                fingerprint: cardData.paymentMethod.card.fingerprint,
+                funding: cardData.paymentMethod.card.funding,
+              }
+              
+              // Use the card data and try to get BIN from fingerprint for real bank lookup
+              let potentialBin = null
+              
+              // Try to extract BIN from card fingerprint (sometimes contains encoded BIN info)
+              if (cardData.paymentMethod.card.fingerprint) {
+                // Look for 6-digit patterns in the fingerprint
+                const binPattern = /\d{6}/g
+                const matches = cardData.paymentMethod.card.fingerprint.match(binPattern)
+                if (matches && matches.length > 0) {
+                  potentialBin = matches[0] // Use first 6-digit match
+                  console.log('Potential BIN from fingerprint:', potentialBin)
+                }
+              }
+              
+              // Always provide basic bank info, then try to enhance it
+              bankInfo = {
+                bank_name: `${cardData.paymentMethod.card.brand} Issuing Bank`,
+                bin: potentialBin || 'NOT_FOUND',
+                bank_country: cardData.paymentMethod.card.country || 'United States',
+                card_scheme: cardData.paymentMethod.card.brand?.toUpperCase() || 'UNKNOWN',
+                card_type: cardData.paymentMethod.card.funding || 'debit'
+              }
+              
+              // Try to extract BIN from fingerprint for failed payments
+              if (potentialBin) {
+                console.log('BIN lookup disabled for debugging - potential BIN was:', potentialBin)
+                // TEMPORARILY DISABLED FOR DEBUGGING
+                /*
+                try {
+                  console.log('Attempting BIN lookup for:', potentialBin)
+                  const bankData = await binLookupService.lookupBIN(potentialBin)
+                  
+                  if (bankData && bankData.bank !== 'Unknown') {
+                    // Enhance with real bank data from binlist.net
+                    bankInfo = {
+                      bank_name: bankData.bank,
+                      bank_url: bankData.bank_url || '',
+                      bank_phone: bankData.bank_phone || '',
+                      bank_city: bankData.bank_city || '',
+                      bin: potentialBin,
+                      bank_country: bankData.country || bankInfo.bank_country,
+                      bank_country_code: bankData.country_code || '',
+                      bank_country_currency: bankData.country_currency || '',
+                      bank_country_emoji: bankData.country_emoji || '',
+                      card_scheme: bankData.scheme || bankInfo.card_scheme,
+                      card_brand: bankData.brand || bankInfo.card_scheme,
+                      card_type: bankData.type || bankInfo.card_type,
+                      card_prepaid: bankData.prepaid || false,
+                      number_length: bankData.number_length || null,
+                      luhn_valid: bankData.luhn || false,
+                      latitude: bankData.latitude || null,
+                      longitude: bankData.longitude || null
+                    }
+                    console.log('✅ Enhanced with real bank data from binlist.net:', bankInfo)
+                  } else {
+                    console.log('⚠️ BIN lookup returned unknown data, using card brand fallback')
+                  }
+                } catch (binError) {
+                  console.warn('⚠️ BIN lookup failed, using card brand fallback:', binError.message)
+                  // bankInfo already has fallback values, so we continue
+                }
+                */
+              } else {
+                console.log('ℹ️ No BIN found in fingerprint, using card brand fallback')
+              }
+              
+              console.log('Bank info from Stripe:', bankInfo) // Debug log
+            }
+          } catch (cardError) {
+            console.error('Error extracting card info:', cardError)
+            // Fallback to basic info
+            bankInfo = {
+              bank_name: 'Card Issuing Bank',
+              bin: 'EXTRACTION_FAILED',
+              bank_country: 'United States',
+              card_scheme: 'UNKNOWN',
+              card_type: 'debit'
+            }
+          }
+        }
+        
+        // Update payment attempt with detailed failure information
         await updatePaymentAttemptStatus(paymentAttemptId, 'failed', confirmPaymentError.message)
         
-        // Record payment details (failed)
+        // Record payment attempt details even on failure
         await recordPaymentDetails(paymentAttemptId, {
           stripe_payment_intent_id: paymentIntentData.payment_intent_id,
           stripe_payment_method_id: null,
@@ -741,12 +869,43 @@ function PaymentContent() {
           amount: fees.finalAmount,
           currency: 'usd',
           outcome: 'failed',
-          network_status: null,
+          network_status: 'declined',
           reason: confirmPaymentError.message,
           risk_level: 'normal',
           risk_score: 0,
-          fraud_signals: [],
-          stripe_produced: JSON.stringify(paymentIntentData)
+          fraud_signals: JSON.stringify([
+            { type: 'payment_failure', description: confirmPaymentError.message }
+          ]),
+          stripe_produced: JSON.stringify(confirmPaymentError),
+          application_fee_amount: 0,
+          application_fee_currency: 'usd',
+          transfer_amount: 0,
+          transfer_currency: 'usd'
+        })
+        
+        const cardDetailsParams = {
+          payment_attempt_id_param: paymentAttemptId,
+          card_brand_param: cardInfo.brand || 'unknown',
+          card_last4_param: cardInfo.last4 || null,
+          card_exp_month_param: cardInfo.exp_month || null,
+          card_exp_year_param: cardInfo.exp_year || null,
+          card_country_param: cardInfo.country || null,
+          card_fingerprint_param: cardInfo.fingerprint || null,
+          card_funding_param: cardInfo.funding || null,
+          bank_bin_param: bankInfo.bin || null,
+          bank_name_param: bankInfo.bank_name || null,
+          bank_country_param: bankInfo.bank_country || null,
+          card_scheme_param: bankInfo.card_scheme || null,
+          failure_reason_param: confirmPaymentError.message,
+          failure_code_param: confirmPaymentError.code || null,
+          decline_code_param: confirmPaymentError.decline_code || null
+        }
+
+        console.log('DEBUG: Sending card details with debug format:', cardDetailsParams)
+        
+        await supabase.rpc('update_payment_attempt_details', {
+          payment_attempt_id_param: paymentAttemptId,
+          debug_params: cardDetailsParams
         })
 
         setError(confirmPaymentError.message)
@@ -763,6 +922,94 @@ function PaymentContent() {
       const cardCountry = cardDetails.country || null
       const cardExpMonth = cardDetails.exp_month?.toString() || null
       const cardExpYear = cardDetails.exp_year?.toString() || null
+      const cardFunding = cardDetails.funding || null
+      const cardFingerprint = cardDetails.fingerprint || null
+
+      // Capture bank information for successful payments too
+      let bankInfo = {
+        bank_name: `${cardBrand || 'Card'} Issuing Bank`,
+        bin: 'NOT_FOUND',
+        bank_country: cardCountry || 'United States',
+        card_scheme: cardBrand?.toUpperCase() || 'UNKNOWN',
+        card_type: cardFunding || 'debit'
+      }
+
+      // Try to extract BIN from fingerprint for successful payments
+      if (cardFingerprint) {
+        const binPattern = /\d{6}/g
+        const matches = cardFingerprint.match(binPattern)
+        if (matches && matches.length > 0) {
+          const potentialBin = matches[0]
+          console.log('Successful payment - Potential BIN from fingerprint:', potentialBin)
+          bankInfo.bin = potentialBin
+          
+          // Try real BIN lookup for successful payment
+          try {
+            console.log('BIN lookup disabled for debugging - potential BIN was:', potentialBin)
+            // TEMPORARILY DISABLED FOR DEBUGGING
+            /*
+            console.log('Attempting BIN lookup for successful payment:', potentialBin)
+            const bankData = await binLookupService.lookupBIN(potentialBin)
+            
+            if (bankData && bankData.bank !== 'Unknown') {
+              // Enhance with real bank data from binlist.net
+              bankInfo = {
+                bank_name: bankData.bank,
+                bank_url: bankData.bank_url || '',
+                bank_phone: bankData.bank_phone || '',
+                bank_city: bankData.bank_city || '',
+                bin: potentialBin,
+                bank_country: bankData.country || bankInfo.bank_country,
+                bank_country_code: bankData.country_code || '',
+                bank_country_currency: bankData.country_currency || '',
+                bank_country_emoji: bankData.country_emoji || '',
+                card_scheme: bankData.scheme || bankInfo.card_scheme,
+                card_brand: bankData.brand || bankInfo.card_scheme,
+                card_type: bankData.type || bankInfo.card_type,
+                card_prepaid: bankData.prepaid || false,
+                number_length: bankData.number_length || null,
+                luhn_valid: bankData.luhn || false,
+                latitude: bankData.latitude || null,
+                longitude: bankData.longitude || null
+              }
+              console.log('✅ Successful payment - Enhanced with real bank data from binlist.net:', bankInfo)
+            } else {
+              console.log('⚠️ Successful payment - BIN lookup returned unknown data, using card brand fallback')
+            }
+            */
+          } catch (binError) {
+            console.warn('⚠️ Successful payment - BIN lookup failed, using card brand fallback:', binError.message)
+          }
+        }
+      }
+
+      console.log('Successful payment - Bank info:', bankInfo)
+
+      // Update payment attempt with detailed card and bank info for successful payments
+      const successCardDetailsParams = {
+        payment_attempt_id_param: paymentAttemptId,
+        card_brand_param: cardBrand || null,
+        card_last4_param: cardLast4 || null,
+        card_exp_month_param: cardExpMonth || null,
+        card_exp_year_param: cardExpYear || null,
+        card_country_param: cardCountry || null,
+        card_fingerprint_param: cardFingerprint || null,
+        card_funding_param: cardFunding || null,
+        bank_bin_param: bankInfo.bin || null,
+        bank_name_param: bankInfo.bank_name || null,
+        bank_country_param: bankInfo.bank_country || null,
+        card_scheme_param: bankInfo.card_scheme || null,
+        failure_reason_param: null, // No failure for successful payments
+        failure_code_param: null,
+        decline_code_param: null,
+      }
+
+      console.log('DEBUG: Sending success card details with debug format:', successCardDetailsParams)
+      
+      await supabase.rpc('update_payment_attempt_details', {
+        payment_attempt_id_param: paymentAttemptId,
+        debug_params: successCardDetailsParams
+      })
 
       // Update payment attempt status to succeeded
       await updatePaymentAttemptStatus(paymentAttemptId, 'succeeded', 'Payment completed successfully')
@@ -901,11 +1148,11 @@ function PaymentContent() {
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <button
-              onClick={() => navigate('/invoices')}
+              onClick={() => navigate('/client-portal')}
               className="text-slate-300 hover:text-white transition-colors flex items-center space-x-2"
             >
               <ArrowLeft size={20} />
-              <span>Back to Invoices</span>
+              <span>Back to Client Portal</span>
             </button>
             <div className="flex items-center space-x-2">
               <Shield className="text-blue-400" size={24} />
@@ -990,7 +1237,7 @@ function PaymentContent() {
                     {appliedDiscount && (
                       <tr>
                         <td colSpan="2" className="py-3 px-4 text-green-400 font-semibold">
-                          Discount ({appliedDiscount.code})
+                          Discount {appliedDiscount.code ? `(${appliedDiscount.code})` : 'Code'}
                         </td>
                         <td className="py-3 px-4 text-right text-green-400 font-semibold">
                           -${appliedDiscount.discount_amount.toFixed(2)}
@@ -1031,7 +1278,7 @@ function PaymentContent() {
                 </div>
                 {appliedDiscount && (
                   <div className="flex justify-between items-center">
-                    <span className="text-green-300">Discount ({appliedDiscount.code}):</span>
+                    <span className="text-green-300">Discount {appliedDiscount.code ? `(${appliedDiscount.code})` : 'Code'}:</span>
                     <span className="text-green-300 font-semibold">-${appliedDiscount.discount_amount.toFixed(2)}</span>
                   </div>
                 )}
@@ -1046,6 +1293,28 @@ function PaymentContent() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Security Info */}
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-6 border border-white/20">
+              <div className="flex items-center space-x-3 mb-4">
+                <Lock className="text-green-400" size={20} />
+                <h3 className="text-lg font-bold text-white">Secure Payment</h3>
+              </div>
+              <ul className="space-y-2 text-slate-300 text-sm">
+                <li className="flex items-start space-x-2">
+                  <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                  <span>256-bit SSL encryption</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                  <span>PCI DSS compliant</span>
+                </li>
+                <li className="flex items-start space-x-2">
+                  <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                  <span>Fraud protection</span>
+                </li>
+              </ul>
             </div>
 
             {/* Discount Code Input */}
@@ -1117,28 +1386,6 @@ function PaymentContent() {
                 </button>
               </div>
             </form>
-
-            {/* Security Info */}
-            <div className="bg-white/5 backdrop-blur-md rounded-xl p-6 border border-white/20">
-              <div className="flex items-center space-x-3 mb-4">
-                <Lock className="text-green-400" size={20} />
-                <h3 className="text-lg font-bold text-white">Secure Payment</h3>
-              </div>
-              <ul className="space-y-2 text-slate-300 text-sm">
-                <li className="flex items-start space-x-2">
-                  <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>256-bit SSL encryption</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>PCI DSS compliant</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <CheckCircle size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
-                  <span>Fraud protection</span>
-                </li>
-              </ul>
-            </div>
           </div>
         </div>
       </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { useAuthStore } from '../../store/authStore-emergency'
+import { useAuthStore } from '../../store/authStore'
 import { Car, Save, ArrowLeft, Trash2 } from 'lucide-react'
 import { carMakes, carModels, carYears } from '../../data/carData'
 import ClientNavigation from '../../components/ClientNavigation'
@@ -36,6 +36,7 @@ function ClientVehicleEdit() {
 
   const loadVehicleData = async () => {
     try {
+      console.log('Loading vehicle data for ID:', id, 'User:', user?.id)
       setFetchLoading(true)
 
       // Get client data
@@ -47,27 +48,41 @@ function ClientVehicleEdit() {
       const client = clients && clients.length > 0 ? clients[0] : null
 
       if (!client) {
+        console.error('Client data not found for user:', user?.id)
         toast.error('Client data not found')
+        setFetchLoading(false) // Reset loading before navigate
         navigate('/client-portal/vehicles')
         return
       }
 
+      console.log('Found client:', client.id)
       setClientData(client)
 
       // Get vehicle data
-      const { data: vehicleData } = await supabase
+      const { data: vehicleData, error } = await supabase
         .from('vehicles')
         .select('*')
         .eq('id', id)
         .eq('client_id', client.id)
         .single()
 
-      if (!vehicleData) {
+      if (error) {
+        console.error('Vehicle query error:', error)
         toast.error('Vehicle not found')
+        setFetchLoading(false) // Reset loading before navigate
         navigate('/client-portal/vehicles')
         return
       }
 
+      if (!vehicleData) {
+        console.error('Vehicle data is null')
+        toast.error('Vehicle not found')
+        setFetchLoading(false) // Reset loading before navigate
+        navigate('/client-portal/vehicles')
+        return
+      }
+
+      console.log('Found vehicle:', vehicleData)
       setVehicle(vehicleData)
       setSelectedMake(vehicleData.make || '')
       setFormData({
@@ -83,7 +98,7 @@ function ClientVehicleEdit() {
       setFetchLoading(false)
     } catch (error) {
       console.error('Error loading vehicle data:', error)
-      toast.error('Failed to load vehicle data')
+      toast.error('Failed to load vehicle data: ' + error.message)
       setFetchLoading(false)
     }
   }
@@ -157,7 +172,7 @@ function ClientVehicleEdit() {
 
   if (fetchLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-electric-blue"></div>
       </div>
     )
@@ -165,11 +180,11 @@ function ClientVehicleEdit() {
 
   if (!vehicle || !clientData) {
     return (
-      <div className="min-h-screen bg-navy-gradient pt-24 pb-20 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <h1 className="text-4xl font-bold metallic-heading mb-4">Vehicle Not Found</h1>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="max-w-2xl mx-auto text-center px-4">
+          <h1 className="text-4xl font-bold text-white mb-4">Vehicle Not Found</h1>
           <p className="text-light-gray mb-6">The vehicle you're trying to edit doesn't exist or you don't have access to it.</p>
-          <Link to="/client-portal/vehicles" className="btn-primary">
+          <Link to="/client-portal/vehicles" className="inline-flex items-center gap-2 px-6 py-3 bg-electric-blue hover:bg-electric-blue/90 rounded-lg text-white font-semibold transition-colors">
             Back to Vehicles
           </Link>
         </div>
@@ -178,35 +193,37 @@ function ClientVehicleEdit() {
   }
 
   return (
-    <div className="min-h-screen bg-navy-gradient">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <ClientNavigation />
-      <div className="pt-16 pb-20 px-4">
-        <div className="max-w-2xl mx-auto">
+      
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
         <div className="mb-8">
-          <Link
+          <Link 
             to={`/client-portal/vehicles/${id}`}
-            className="text-light-gray hover:text-electric-blue transition-colors flex items-center mb-4"
+            className="inline-flex items-center gap-2 text-light-gray hover:text-metallic-silver mb-6 transition-colors"
           >
-            <ArrowLeft size={20} className="mr-2" />
-            Back to Vehicle Details
+            <ArrowLeft size={20} />
+            <span>Back to Vehicle Details</span>
           </Link>
-          <h1 className="text-4xl font-bold metallic-heading mb-2">Edit Vehicle</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Edit Vehicle</h1>
           <p className="text-light-gray">Update your vehicle information</p>
         </div>
 
-        <div className="glass-card">
+        {/* Form Card */}
+        <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20 mb-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-metallic-silver mb-2 font-semibold">
-                  Year <span className="text-bright-cyan">*</span>
+                <label className="block text-sm font-medium text-light-gray mb-2">
+                  Year <span className="text-electric-blue">*</span>
                 </label>
                 <select
                   name="year"
                   value={formData.year}
                   onChange={handleChange}
                   required
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                  className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                 >
                   <option value="">Select Year</option>
                   {carYears.map(year => (
@@ -216,15 +233,15 @@ function ClientVehicleEdit() {
               </div>
 
               <div>
-                <label className="block text-metallic-silver mb-2 font-semibold">
-                  Make <span className="text-bright-cyan">*</span>
+                <label className="block text-sm font-medium text-light-gray mb-2">
+                  Make <span className="text-electric-blue">*</span>
                 </label>
                 <select
                   name="make"
                   value={formData.make}
                   onChange={handleChange}
                   required
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                  className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                 >
                   <option value="">Select Make</option>
                   {carMakes.map(make => (
@@ -234,8 +251,8 @@ function ClientVehicleEdit() {
               </div>
 
               <div>
-                <label className="block text-metallic-silver mb-2 font-semibold">
-                  Model <span className="text-bright-cyan">*</span>
+                <label className="block text-sm font-medium text-light-gray mb-2">
+                  Model <span className="text-electric-blue">*</span>
                 </label>
                 <select
                   name="model"
@@ -243,7 +260,7 @@ function ClientVehicleEdit() {
                   onChange={handleChange}
                   required
                   disabled={!selectedMake}
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all disabled:opacity-50"
+                  className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue disabled:opacity-50"
                 >
                   <option value="">Select Model</option>
                   {selectedMake && carModels[selectedMake]?.map(model => (
@@ -253,17 +270,17 @@ function ClientVehicleEdit() {
               </div>
 
               <div>
-                <label className="block text-metallic-silver mb-2 font-semibold">
-                  Vehicle Size <span className="text-bright-cyan">*</span>
+                <label className="block text-sm font-medium text-light-gray mb-2">
+                  Vehicle Size <span className="text-electric-blue">*</span>
                 </label>
                 <select
                   name="vehicle_size"
                   value={formData.vehicle_size}
                   onChange={handleChange}
                   required
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                  className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                 >
-                  <option value="">Select size</option>
+                  <option value="">Select Size</option>
                   <option value="sedan">Sedan</option>
                   <option value="suv">SUV</option>
                   <option value="truck">Truck</option>
@@ -272,7 +289,7 @@ function ClientVehicleEdit() {
               </div>
 
               <div>
-                <label className="block text-metallic-silver mb-2 font-semibold">
+                <label className="block text-sm font-medium text-light-gray mb-2">
                   Color
                 </label>
                 <input
@@ -281,73 +298,72 @@ function ClientVehicleEdit() {
                   value={formData.color}
                   onChange={handleChange}
                   placeholder="Silver"
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                  className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                 />
               </div>
 
               <div>
-                <label className="block text-metallic-silver mb-2 font-semibold">
-                  License Plate <span className="text-bright-cyan">*</span>
+                <label className="block text-sm font-medium text-light-gray mb-2">
+                  License Plate
                 </label>
                 <input
                   type="text"
                   name="license_plate"
                   value={formData.license_plate}
                   onChange={handleChange}
-                  required
                   placeholder="ABC-1234"
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all"
+                  className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue"
                 />
               </div>
+            </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-metallic-silver mb-2 font-semibold">
-                  Notes
-                </label>
-                <textarea
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  rows="4"
-                  placeholder="Any special notes about this vehicle..."
-                  className="w-full bg-navy-dark border border-electric-blue/30 rounded-lg px-4 py-3 text-metallic-silver focus:border-electric-blue focus:outline-none focus:ring-2 focus:ring-electric-blue/50 transition-all resize-none"
-                ></textarea>
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-light-gray mb-2">
+                Additional Notes
+              </label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                rows={4}
+                placeholder="Any special notes about this vehicle..."
+                className="w-full px-4 py-3 bg-navy-dark border border-electric-blue/20 rounded-lg text-white focus:outline-none focus:border-electric-blue resize-none"
+              />
             </div>
 
             <div className="flex gap-4">
               <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary shine-effect flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-6 py-3 bg-electric-blue hover:bg-electric-blue/90 rounded-lg text-white font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Save size={20} className="inline mr-2" />
                 {loading ? 'Updating Vehicle...' : 'Update Vehicle'}
               </button>
               <Link
                 to={`/client-portal/vehicles/${id}`}
-                className="btn-secondary flex-1 text-center"
+                className="flex-1 px-6 py-3 bg-navy-dark hover:bg-navy-dark/70 rounded-lg text-white font-semibold text-center transition-colors"
               >
                 Cancel
               </Link>
             </div>
           </form>
-
-          <div className="mt-6 pt-6 border-t border-electric-blue/20">
-            <button
-              onClick={handleDelete}
-              className="w-full bg-red-500/20 border border-red-500/30 rounded-lg p-4 hover:bg-red-500/30 transition-colors text-left"
-            >
-              <div className="flex items-center">
-                <Trash2 className="text-red-400 mr-3" size={20} />
-                <div>
-                  <p className="font-bold text-red-400 mb-1">Remove Vehicle</p>
-                  <p className="text-sm text-light-gray">Delete this vehicle from your profile</p>
-                </div>
-              </div>
-            </button>
-          </div>
         </div>
+
+        {/* Delete Vehicle Card */}
+        <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-red-500/20">
+          <button
+            onClick={handleDelete}
+            className="w-full bg-red-500/20 border border-red-500/30 rounded-lg p-4 hover:bg-red-500/30 transition-colors text-left"
+          >
+            <div className="flex items-center">
+              <Trash2 className="text-red-400 mr-3" size={20} />
+              <div>
+                <p className="font-bold text-red-400 mb-1">Remove Vehicle</p>
+                <p className="text-sm text-light-gray">Delete this vehicle from your profile</p>
+              </div>
+            </div>
+          </button>
         </div>
       </div>
     </div>

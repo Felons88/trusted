@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { useAuthStore } from '../../store/authStore-emergency'
+import { useAuthStore } from '../../store/authStore'
 import { Car, Plus, Edit, Trash2, Eye } from 'lucide-react'
 import ClientNavigation from '../../components/ClientNavigation'
 import toast from 'react-hot-toast'
@@ -72,112 +72,133 @@ function Vehicles() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-electric-blue"></div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-navy-gradient">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <ClientNavigation />
-      <div className="pt-16 pb-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold metallic-heading mb-2">My Vehicles</h1>
-            <p className="text-light-gray">Manage your vehicle information</p>
-          </div>
-          <Link to="/client-portal/vehicles/add" className="btn-primary">
-            <Plus size={20} className="inline mr-2" />
-            Add Vehicle
-          </Link>
+      
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">My Vehicles</h1>
+          <p className="text-light-gray">Manage your vehicle information</p>
         </div>
 
-        {vehicles.length === 0 ? (
-          <div className="glass-card text-center py-12">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-electric-blue"></div>
+          </div>
+        ) : vehicles.length === 0 ? (
+          <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-12 border border-electric-blue/20 text-center">
             <Car className="text-light-gray mx-auto mb-4" size={64} />
-            <h3 className="text-2xl font-bold metallic-heading mb-4">No Vehicles Yet</h3>
+            <h3 className="text-2xl font-bold text-white mb-4">No Vehicles Yet</h3>
             <p className="text-light-gray mb-6">Add your first vehicle to get started with booking services</p>
-            <Link to="/client-portal/vehicles/add" className="btn-primary">
+            <Link 
+              to="/client-portal/vehicles/add" 
+              className="inline-flex items-center gap-2 px-6 py-3 bg-electric-blue hover:bg-electric-blue/90 rounded-lg text-white font-semibold transition-colors"
+            >
               <Plus size={20} className="inline mr-2" />
               Add Your First Vehicle
             </Link>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vehicles.map((vehicle) => (
-              <div
-                key={vehicle.id}
-                className="glass-card hover:scale-105 transition-transform duration-300"
+          <>
+            {/* Add Vehicle Button */}
+            <div className="mb-6 flex justify-end">
+              <Link 
+                to="/client-portal/vehicles/add" 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-electric-blue hover:bg-electric-blue/90 rounded-lg text-white font-semibold transition-colors"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center">
-                    <Car className="text-electric-blue mr-3" size={32} />
-                    <div>
-                      <h3 className="text-xl font-bold metallic-heading">
-                        {vehicle.year} {vehicle.make} {vehicle.model}
-                      </h3>
-                      <p className="text-sm text-light-gray capitalize">{vehicle.size}</p>
+                <Plus size={20} className="inline mr-2" />
+                Add Vehicle
+              </Link>
+            </div>
+
+            {/* Vehicle Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {vehicles.map((vehicle) => (
+                <div
+                  key={vehicle.id}
+                  className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20 hover:border-electric-blue/40 transition-all"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center">
+                      <Car className="text-electric-blue mr-3" size={24} />
+                      <div>
+                        <h3 className="text-lg font-bold text-white">
+                          {vehicle.year} {vehicle.make}
+                        </h3>
+                        <p className="text-light-gray">{vehicle.model}</p>
+                      </div>
                     </div>
                   </div>
+
+                  <div className="space-y-2 mb-4">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-light-gray">Color:</span>
+                      <span className="text-white">{vehicle.color || 'N/A'}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-light-gray">Size:</span>
+                      <span className="text-white capitalize">{vehicle.size}</span>
+                    </div>
+                    {vehicle.license_plate && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-light-gray">Plate:</span>
+                        <span className="text-white">{vehicle.license_plate}</span>
+                      </div>
+                    )}
+                    {vehicle.vin && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-light-gray">VIN:</span>
+                        <span className="text-white text-xs">{vehicle.vin}</span>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex gap-2">
                     <Link
                       to={`/client-portal/vehicles/${vehicle.id}`}
-                      className="text-electric-blue hover:text-bright-cyan transition-colors"
+                      className="flex-1 px-3 py-2 bg-electric-blue/20 border border-electric-blue/30 rounded-lg text-electric-blue hover:bg-electric-blue/30 transition-colors text-center text-sm font-medium"
                     >
-                      <Eye size={20} />
+                      <Eye size={16} className="inline mr-1" />
+                      View
                     </Link>
                     <Link
                       to={`/client-portal/vehicles/${vehicle.id}/edit`}
-                      className="text-electric-blue hover:text-bright-cyan transition-colors"
+                      className="flex-1 px-3 py-2 bg-navy-dark/50 border border-electric-blue/20 rounded-lg text-white hover:bg-navy-dark/70 transition-colors text-center text-sm font-medium"
                     >
-                      <Edit size={20} />
+                      <Edit size={16} className="inline mr-1" />
+                      Edit
                     </Link>
                     <button
                       onClick={() => deleteVehicle(vehicle.id)}
-                      className="text-red-400 hover:text-red-300 transition-colors"
+                      className="flex-1 px-3 py-2 bg-red-400 hover:bg-red-300 rounded-lg text-white font-medium transition-colors text-center text-sm"
                     >
-                      <Trash2 size={20} />
+                      <Trash2 size={16} className="inline mr-1" />
+                      Delete
                     </button>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  {vehicle.color && (
-                    <div className="flex justify-between">
-                      <span className="text-light-gray">Color:</span>
-                      <span className="text-metallic-silver">{vehicle.color}</span>
-                    </div>
-                  )}
-                  {vehicle.license_plate && (
-                    <div className="flex justify-between">
-                      <span className="text-light-gray">License:</span>
-                      <span className="text-metallic-silver">{vehicle.license_plate}</span>
-                    </div>
-                  )}
-                  {vehicle.vin && (
-                    <div className="flex justify-between">
-                      <span className="text-light-gray">VIN:</span>
-                      <span className="text-metallic-silver text-sm">{vehicle.vin}</span>
-                    </div>
-                  )}
+                  <div className="mt-4 pt-4 border-t border-electric-blue/20">
+                    <Link
+                      to="/client-portal/bookings/new"
+                      state={{ vehicleId: vehicle.id, skipVehicleSelection: true }}
+                      className="block w-full px-4 py-2 bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 rounded-lg text-green-400 font-semibold text-center transition-colors text-sm"
+                    >
+                      Use This for Booking →
+                    </Link>
+                  </div>
                 </div>
-
-                <div className="mt-4 pt-4 border-t border-electric-blue/20">
-                  <Link
-                    to="/book-now"
-                    state={{ vehicleId: vehicle.id }}
-                    className="btn-secondary w-full text-center inline-block"
-                  >
-                    Book Service for This Vehicle
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
-        </div>
       </div>
     </div>
   )
