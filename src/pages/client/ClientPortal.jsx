@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { useAuthStore } from '../../store/authStore'
-import { Calendar, Car, DollarSign, Clock, Plus, Eye, RefreshCw, Settings, User } from 'lucide-react'
+import { Calendar, Car, DollarSign, Clock, Plus, Eye, RefreshCw, Settings, User, Mail } from 'lucide-react'
 import { format } from 'date-fns'
 import ClientNavigation from '../../components/ClientNavigation'
+import EmailHistory from '../../components/EmailHistory'
 import toast from 'react-hot-toast'
 
 function ClientPortal() {
@@ -13,6 +14,7 @@ function ClientPortal() {
   const [bookings, setBookings] = useState([])
   const [vehicles, setVehicles] = useState([])
   const [payments, setPayments] = useState([])
+  const [activeTab, setActiveTab] = useState('bookings')
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
@@ -303,140 +305,266 @@ function ClientPortal() {
             </div>
           </div>
 
-          {/* Vehicles & Quick Actions */}
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* My Vehicles */}
-            <div className="lg:col-span-2 bg-gradient-to-br from-navy-dark/30 to-navy-dark/50 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold metallic-heading mb-1">My Vehicles</h2>
-                  <p className="text-light-gray/60 text-sm">Manage your vehicle fleet</p>
-                </div>
-                <Link 
-                  to="/client-portal/vehicles/add" 
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-electric-blue to-bright-cyan hover:from-electric-blue/90 hover:to-bright-cyan/90 rounded-lg text-white font-semibold shadow-lg transition-all"
-                >
-                  <Plus size={16} />
-                  Add Vehicle
-                </Link>
-              </div>
-
-              {vehicles.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="relative inline-block mb-6">
-                    <div className="absolute inset-0 bg-electric-blue/20 blur-2xl rounded-full"></div>
-                    <div className="relative bg-navy-dark/50 border border-electric-blue/20 p-6 rounded-2xl">
-                      <Car className="text-light-gray mx-auto" size={48} />
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-semibold text-metallic-silver mb-3">No Vehicles Yet</h3>
-                  <p className="text-light-gray/60 mb-6 max-w-sm mx-auto">
-                    Add your first vehicle to start booking appointments and managing your automotive services
-                  </p>
-                  <Link 
-                    to="/client-portal/vehicles/add" 
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-electric-blue to-bright-cyan hover:from-electric-blue/90 hover:to-bright-cyan/90 rounded-lg text-white font-semibold shadow-lg transition-all"
-                  >
-                    <Plus size={18} />
-                    Add Your First Vehicle
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {vehicles.map((vehicle) => (
-                    <div
-                      key={vehicle.id}
-                      className="group bg-navy-dark/30 border border-electric-blue/20 rounded-xl p-4 hover:border-electric-blue/40 transition-all duration-300"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="p-3 bg-gradient-to-br from-electric-blue/20 to-bright-cyan/20 rounded-xl">
-                            <Car className="text-electric-blue" size={20} />
-                          </div>
-                          <div>
-                            <h3 className="font-bold text-metallic-silver text-lg">
-                              {vehicle.year} {vehicle.make} {vehicle.model}
-                            </h3>
-                            <p className="text-light-gray/60 text-sm capitalize">{vehicle.size}</p>
-                            {vehicle.color && (
-                              <p className="text-light-gray/60 text-sm">{vehicle.color}</p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Link
-                            to={`/client-portal/vehicles/${vehicle.id}/edit`}
-                            className="p-2 text-light-gray/60 hover:text-electric-blue transition-colors"
-                          >
-                            <Settings size={16} />
-                          </Link>
-                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Quick Actions Box */}
-            <div className="bg-gradient-to-br from-navy-dark/30 to-navy-dark/50 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
-              <div className="mb-6">
-                <h2 className="text-2xl font-bold metallic-heading mb-1">Quick Actions</h2>
-                <p className="text-light-gray/60 text-sm">Common tasks and shortcuts</p>
-              </div>
-              
-              <div className="space-y-3">
-                <Link 
-                  to="/client-portal/bookings/new" 
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-electric-blue to-bright-cyan hover:from-electric-blue/90 hover:to-bright-cyan/90 rounded-lg text-white font-semibold shadow-lg transition-all"
-                >
-                  <Plus size={18} />
-                  <div className="flex-1 text-left">
-                    <p className="font-medium">Book Appointment</p>
-                    <p className="text-xs opacity-90">Schedule new detailing service</p>
-                  </div>
-                </Link>
-
-                <Link 
-                  to="/client-portal/vehicles/add" 
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-500/90 hover:to-pink-500/90 rounded-lg text-white font-semibold shadow-lg transition-all"
-                >
-                  <Plus size={18} />
-                  <div className="flex-1 text-left">
-                    <p className="font-medium">Add Vehicle</p>
-                    <p className="text-xs opacity-90">Register a new vehicle</p>
-                  </div>
-                </Link>
-
-                <Link 
-                  to="/client-portal/settings" 
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-navy-dark/50 hover:bg-navy-dark/70 border border-electric-blue/20 rounded-lg text-light-gray hover:text-metallic-silver transition-all"
-                >
-                  <Settings size={18} />
-                  <div className="flex-1 text-left">
-                    <p className="font-medium">Settings</p>
-                    <p className="text-xs text-light-gray/60">Manage account preferences</p>
-                  </div>
-                </Link>
-
-                <Link 
-                  to="/client-portal/bookings" 
-                  className="w-full flex items-center gap-3 px-4 py-3 bg-navy-dark/50 hover:bg-navy-dark/70 border border-electric-blue/20 rounded-lg text-light-gray hover:text-metallic-silver transition-all"
-                >
-                  <Calendar size={18} />
-                  <div className="flex-1 text-left">
-                    <p className="font-medium">View All Bookings</p>
-                    <p className="text-xs text-light-gray/60">Complete appointment history</p>
-                  </div>
-                </Link>
-              </div>
+          {/* Navigation Tabs */}
+          <div className="bg-navy-dark/30 backdrop-blur-xl rounded-2xl p-2 border border-electric-blue/20 mb-8">
+            <div className="flex space-x-1">
+              <button
+                onClick={() => setActiveTab('bookings')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                  activeTab === 'bookings' 
+                    ? 'bg-electric-blue text-white' 
+                    : 'text-light-gray hover:text-metallic-silver hover:bg-navy-dark/50'
+                }`}
+              >
+                <Calendar size={18} />
+                <span>Bookings</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('vehicles')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                  activeTab === 'vehicles' 
+                    ? 'bg-electric-blue text-white' 
+                    : 'text-light-gray hover:text-metallic-silver hover:bg-navy-dark/50'
+                }`}
+              >
+                <Car size={18} />
+                <span>Vehicles</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('payments')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                  activeTab === 'payments' 
+                    ? 'bg-electric-blue text-white' 
+                    : 'text-light-gray hover:text-metallic-silver hover:bg-navy-dark/50'
+                }`}
+              >
+                <DollarSign size={18} />
+                <span>Payments</span>
+              </button>
+              <button
+                onClick={() => setActiveTab('emails')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                  activeTab === 'emails' 
+                    ? 'bg-electric-blue text-white' 
+                    : 'text-light-gray hover:text-metallic-silver hover:bg-navy-dark/50'
+                }`}
+              >
+                <Mail size={18} />
+                <span>Email History</span>
+              </button>
             </div>
           </div>
+
+          {/* Tab Content */}
+          {activeTab === 'bookings' && (
+            <div className="space-y-6">
+              {/* Recent Bookings */}
+              <div className="bg-gradient-to-br from-navy-dark/30 to-navy-dark/50 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold metallic-heading">Recent Bookings</h2>
+                  <Link 
+                    to="/client-portal/bookings" 
+                    className="text-electric-blue hover:text-bright-cyan flex items-center space-x-1"
+                  >
+                    <Eye size={20} />
+                    <span>View All</span>
+                  </Link>
+                </div>
+                
+                {bookings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="relative inline-block mb-6">
+                      <div className="absolute inset-0 bg-electric-blue/20 blur-2xl rounded-full"></div>
+                      <div className="relative bg-navy-dark/50 border border-electric-blue/20 p-6 rounded-2xl">
+                        <Calendar className="text-light-gray mx-auto" size={48} />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-metallic-silver mb-3">No Bookings Yet</h3>
+                    <p className="text-light-gray/60 mb-6 max-w-sm mx-auto">
+                      Book your first detailing appointment to get started
+                    </p>
+                    <Link 
+                      to="/client-portal/bookings/add" 
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-electric-blue to-bright-cyan hover:from-electric-blue/90 hover:to-bright-cyan/90 rounded-lg text-white font-semibold shadow-lg transition-all"
+                    >
+                      <Plus size={18} />
+                      Book Appointment
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {bookings.slice(0, 5).map((booking) => (
+                      <div
+                        key={booking.id}
+                        className="bg-navy-dark/50 border border-navy-dark rounded-lg p-4 hover:border-electric-blue/40 transition-all"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-white">
+                              {booking.services?.name || 'Service'}
+                            </p>
+                            <p className="text-sm text-light-gray">
+                              {format(new Date(booking.preferred_date), 'MMM dd, yyyy')} at {booking.preferred_time || 'TBD'}
+                            </p>
+                          </div>
+                          <div className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(booking.status)}`}>
+                            {booking.status}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'vehicles' && (
+            <div className="space-y-6">
+              {/* My Vehicles */}
+              <div className="bg-gradient-to-br from-navy-dark/30 to-navy-dark/50 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold metallic-heading">My Vehicles</h2>
+                  <Link 
+                    to="/client-portal/vehicles/add" 
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-electric-blue to-bright-cyan hover:from-electric-blue/90 hover:to-bright-cyan/90 rounded-lg text-white font-semibold shadow-lg transition-all"
+                  >
+                    <Plus size={16} />
+                    Add Vehicle
+                  </Link>
+                </div>
+
+                {vehicles.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="relative inline-block mb-6">
+                      <div className="absolute inset-0 bg-electric-blue/20 blur-2xl rounded-full"></div>
+                      <div className="relative bg-navy-dark/50 border border-electric-blue/20 p-6 rounded-2xl">
+                        <Car className="text-light-gray mx-auto" size={48} />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-metallic-silver mb-3">No Vehicles Yet</h3>
+                    <p className="text-light-gray/60 mb-6 max-w-sm mx-auto">
+                      Add your first vehicle to start booking appointments
+                    </p>
+                    <Link 
+                      to="/client-portal/vehicles/add" 
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-electric-blue to-bright-cyan hover:from-electric-blue/90 hover:to-bright-cyan/90 rounded-lg text-white font-semibold shadow-lg transition-all"
+                    >
+                      <Plus size={18} />
+                      Add Your First Vehicle
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {vehicles.map((vehicle) => (
+                      <div
+                        key={vehicle.id}
+                        className="bg-navy-dark/50 border border-navy-dark rounded-lg p-4 hover:border-electric-blue/40 transition-all"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-white">
+                              {vehicle.year} {vehicle.make} {vehicle.model}
+                            </p>
+                            <p className="text-sm text-light-gray">
+                              {vehicle.color} • {vehicle.license_plate || 'No plate'}
+                            </p>
+                          </div>
+                          <Link 
+                            to={`/client-portal/vehicles/${vehicle.id}`}
+                            className="text-electric-blue hover:text-bright-cyan flex items-center space-x-1"
+                          >
+                            <Eye size={20} />
+                            <span>View</span>
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'payments' && (
+            <div className="space-y-6">
+              {/* Payment History */}
+              <div className="bg-gradient-to-br from-navy-dark/30 to-navy-dark/50 backdrop-blur-xl rounded-2xl p-6 border border-electric-blue/20">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold metallic-heading">Payment History</h2>
+                  <Link 
+                    to="/client-portal/invoices" 
+                    className="text-electric-blue hover:text-bright-cyan flex items-center space-x-1"
+                  >
+                    <Eye size={20} />
+                    <span>View All</span>
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="bg-navy-dark/50 border border-navy-dark rounded-lg p-4">
+                    <p className="text-sm text-light-gray mb-2">Paid</p>
+                    <p className="text-2xl font-bold text-green-400">{stats.paidPayments}</p>
+                  </div>
+                  <div className="bg-navy-dark/50 border border-navy-dark rounded-lg p-4">
+                    <p className="text-sm text-light-gray mb-2">Pending</p>
+                    <p className="text-2xl font-bold text-yellow-400">{stats.pendingPayments}</p>
+                  </div>
+                </div>
+
+                {payments.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="relative inline-block mb-6">
+                      <div className="absolute inset-0 bg-electric-blue/20 blur-2xl rounded-full"></div>
+                      <div className="relative bg-navy-dark/50 border border-electric-blue/20 p-6 rounded-2xl">
+                        <DollarSign className="text-light-gray mx-auto" size={48} />
+                      </div>
+                    </div>
+                    <h3 className="text-xl font-semibold text-metallic-silver mb-3">No Payments Yet</h3>
+                    <p className="text-light-gray/60 max-w-sm mx-auto">
+                      Your payment history will appear here once you have completed bookings
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {payments.slice(0, 5).map((payment) => (
+                      <div
+                        key={payment.id}
+                        className="bg-navy-dark/50 border border-navy-dark rounded-lg p-4 hover:border-electric-blue/40 transition-all"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-semibold text-white">
+                              {payment.invoices?.invoice_number || `Payment #${payment.id.substring(0, 8)}`}
+                            </p>
+                            <p className="text-sm text-light-gray">
+                              {format(new Date(payment.created_at), 'MMM dd, yyyy')}
+                            </p>
+                          </div>
+                          <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                            payment.status === 'paid' 
+                              ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                              : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                          }`}>
+                            {payment.status}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'emails' && (
+            <div className="space-y-6">
+              <EmailHistory clientUserId={user?.id} />
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
-}
 
 export default ClientPortal

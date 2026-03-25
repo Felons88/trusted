@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
 import { format } from 'date-fns'
-import { 
-  ArrowLeft, Edit, Trash2, Calendar, Clock, User, Car, DollarSign, 
-  MapPin, Phone, Mail, CheckCircle, XCircle, AlertCircle, MoreVertical,
-  FileText, Download, Send, Activity, Settings, UserPlus, Map
-} from 'lucide-react'
 import toast from 'react-hot-toast'
+import { 
+  ArrowLeft, Calendar, Clock, MapPin, Car, User, Phone, 
+  DollarSign, Edit2, Trash2, CheckCircle, XCircle, AlertCircle,
+  FileText, Mail, MessageSquare, Activity
+} from 'lucide-react'
+import { emailTriggerService } from '../../services/emailTriggerService'
 
 function BookingDetail() {
   const { id } = useParams()
@@ -277,6 +278,15 @@ function BookingDetail() {
 
       // Update local state
       setBooking(prev => ({ ...prev, status: newStatus, updated_at: new Date().toISOString() }))
+      
+      // Trigger email based on status change
+      const fullBookingData = await emailTriggerService.getFullBookingData(id)
+      if (fullBookingData) {
+        await emailTriggerService.triggerEmail(`booking:status:${newStatus}`, {
+          booking: fullBookingData,
+          client: fullBookingData.clients
+        })
+      }
       
       toast.success(`Booking status changed to ${newStatus.replace('_', ' ').toUpperCase()}`)
     } catch (error) {

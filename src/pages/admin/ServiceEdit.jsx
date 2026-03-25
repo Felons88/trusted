@@ -161,6 +161,18 @@ function ServiceEdit() {
               </div>
 
               <div>
+                <label className="block text-sm text-light-gray mb-2">Description</label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  className="admin-input"
+                  rows={4}
+                  placeholder="Describe what this service includes..."
+                  required
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm text-light-gray mb-2">Service Type</label>
                 <select
                   value={formData.type}

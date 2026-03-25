@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import { supabase } from '../../lib/supabase'
-import { 
-  User, Car, Mail, Phone, MapPin, Calendar, Plus, 
-  AlertCircle, CheckCircle, Clock, Archive 
-} from 'lucide-react'
 import toast from 'react-hot-toast'
+import { emailTriggerService } from '../../services/emailTriggerService'
+import { 
+  FileText, Users, Calendar, Clock, CheckCircle, 
+  AlertCircle, Phone, Mail, MapPin, Car, Trash2, Edit
+} from 'lucide-react'
 
 function QuoteRequests() {
   const [quoteRequests, setQuoteRequests] = useState([])
@@ -42,6 +42,9 @@ function QuoteRequests() {
 
   const updateStatus = async (id, newStatus) => {
     try {
+      // Get quote request data before update
+      const quoteData = await emailTriggerService.getFullQuoteData(id)
+      
       const { error } = await supabase
         .from('quote_requests')
         .update({ 
@@ -51,6 +54,13 @@ function QuoteRequests() {
         .eq('id', id)
 
       if (error) throw error
+
+      // Trigger email based on status change
+      if (quoteData) {
+        await emailTriggerService.triggerEmail(`quote:status:${newStatus}`, {
+          quoteRequest: quoteData
+        })
+      }
 
       toast.success(`Status updated to ${newStatus}`)
       fetchQuoteRequests()

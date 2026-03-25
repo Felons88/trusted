@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { loadStripe } from '@stripe/stripe-js'
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { Link, ArrowLeft, CreditCard, Lock, CheckCircle, AlertTriangle, Shield, MapPin, Activity, DollarSign, AlertCircle } from 'lucide-react'
-import { supabase } from '../lib/supabase.js'
+import { supabase } from '../lib/supabase'
 import toast from 'react-hot-toast'
+import { loadStripe } from '@stripe/stripe-js'
+import { 
+  CreditCard, Shield, AlertCircle, CheckCircle, 
+  Lock, Smartphone, Mail, Phone, User, Calendar,
+  DollarSign, Truck, Clock, ArrowRight, Link, ArrowLeft, MapPin, Activity
+} from 'lucide-react'
+import { emailTriggerService } from '../services/emailTriggerService'
 import binLookupService from '../services/binLookupService.js'
 import DiscountCodeInput from '../components/DiscountCodeInput'
 import discountCodeService from '../services/discountCodeService'
@@ -859,6 +863,32 @@ function PaymentContent() {
         
         // Update payment attempt with detailed failure information
         await updatePaymentAttemptStatus(paymentAttemptId, 'failed', confirmPaymentError.message)
+
+        // Trigger payment failed email
+        const paymentData = await supabase
+          .from('payment_attempts')
+          .select(`
+            *,
+            invoices (
+              invoice_number,
+              total,
+              client_id,
+              clients (
+                email,
+                full_name
+              )
+            )
+          `)
+          .eq('id', paymentAttemptId)
+          .single()
+
+        if (paymentData && paymentData.invoices) {
+          await emailTriggerService.triggerEmail('payment:status:failed', {
+            paymentAttempt: { ...paymentData, failure_reason: confirmPaymentError.message },
+            invoice: paymentData.invoices,
+            client: paymentData.invoices.clients
+          })
+        }
         
         // Record payment attempt details even on failure
         await recordPaymentDetails(paymentAttemptId, {
@@ -1013,6 +1043,34 @@ function PaymentContent() {
 
       // Update payment attempt status to succeeded
       await updatePaymentAttemptStatus(paymentAttemptId, 'succeeded', 'Payment completed successfully')
+
+      // Trigger payment successful email
+      const paymentData = await supabase
+        .from('payment_attempts')
+        .select(`
+          *,
+          invoices (
+            invoice_number,
+            total,
+            due_date,
+            service_date,
+            client_id,
+            clients (
+              email,
+              full_name
+            )
+          )
+        `)
+        .eq('id', paymentAttemptId)
+        .single()
+
+      if (paymentData && paymentData.invoices) {
+        await emailTriggerService.triggerEmail('payment:status:succeeded', {
+          paymentAttempt: paymentData,
+          invoice: paymentData.invoices,
+          client: paymentData.invoices.clients
+        })
+      }
 
       // Record payment details (successful)
       await recordPaymentDetails(paymentAttemptId, {
